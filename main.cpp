@@ -1911,6 +1911,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
   SoundData soundData = SoundLoadWave("resource/You_and_Me.wav");
+
   bool hasPlayed = false;
 
 #pragma endregion
