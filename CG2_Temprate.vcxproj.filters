@@ -44,9 +44,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Object3d.PS.hlsl" />
-    <None Include="Object3d.VS.hlsl" />
-    <None Include="Object3d.hlsli" />
+    <None Include="resource\shader\Object3d.PS.hlsl" />
+    <None Include="resource\shader\Object3d.VS.hlsl" />
+    <None Include="resource\shader\Object3d.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="externals\imgui\imconfig.h">
