@@ -1554,7 +1554,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   materialDataSprite->uvTransform = MakeIdentity4x4();
 
 #pragma endregion
-
 #pragma region directionalLight
 
   Microsoft::WRL::ComPtr<ID3D12Resource> directionalLightResource =
