@@ -1174,7 +1174,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
   // int sphereVertexCount = kLatitudeDiv * kLongitudeDiv * 6;
 
-  ModelData modelData = LoadObjFile("resource", "axis.obj");
+  ModelData modelData = LoadObjFile("resource", "plane.obj");
 
   // VertexResource を生成
   Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource = CreateBufferResource(
