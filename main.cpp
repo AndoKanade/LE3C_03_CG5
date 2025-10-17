@@ -1426,7 +1426,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   blendDesc.RenderTarget[0].RenderTargetWriteMask =
       D3D12_COLOR_WRITE_ENABLE_ALL;
 
-  blendDesc.RenderTarget[0].BlendEnable = TRUE;
+  blendDesc.RenderTarget[0].BlendEnable = FALSE;
   blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
   blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
   blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
@@ -1498,7 +1498,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
   // int sphereVertexCount = kLatitudeDiv * kLongitudeDiv * 6;
 
-  ModelData modelData = LoadObjFile("resource", "plane.obj");
+  ModelData modelData = LoadObjFile("resource", "fence.obj");
 
   // VertexResource を生成
   Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource = CreateBufferResource(
@@ -1653,7 +1653,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 #pragma region Textureの読み込み
 
-  DirectX::ScratchImage mipImages = LoadTexture("resource/uvChecker.png");
+  DirectX::ScratchImage mipImages = LoadTexture("resource/fence.png");
   const DirectX::TexMetadata metadata = mipImages.GetMetadata();
   Microsoft::WRL::ComPtr<ID3D12Resource> textureResource =
       CreateTextureResource(device, metadata);
@@ -2150,7 +2150,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
           1, transformationMatrixResourceSprite->GetGPUVirtualAddress());
       commandList.Get()->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
 
-      commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+    //  commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
       ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
 
