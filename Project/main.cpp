@@ -1189,8 +1189,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
   Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain = nullptr;
   DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-  swapChainDesc.Width = kCliantWidth;
-  swapChainDesc.Height = kCliantHeight;
+  swapChainDesc.Width = WinAPI::kCliantWidth;
+  swapChainDesc.Height = WinAPI::kCliantHeight;
   swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
   swapChainDesc.SampleDesc.Count = 1;
   swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -1200,7 +1200,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   // コマンドキュー、ウィンドウハンドル、スワップチェインの設定
 
   hr = dxgiFactory->CreateSwapChainForHwnd(
-      commandQueue.Get(), hwnd, &swapChainDesc, nullptr, nullptr,
+      commandQueue.Get(), winApi->GetHwnd(), &swapChainDesc, nullptr, nullptr,
       reinterpret_cast<IDXGISwapChain1 **>(swapChain.GetAddressOf()));
   // スワップチェインの生成に失敗したら起動しない
   assert(SUCCEEDED(hr));
@@ -1507,7 +1507,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 #pragma region DepthStencillTextureを生成する
 
   Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource =
-      CreateDepthStencilResource(device, kCliantWidth, kCliantHeight);
+      CreateDepthStencilResource(device, WinAPI::kCliantWidth,
+                                 WinAPI::kCliantHeight);
 
 #pragma endregion
 
@@ -1606,8 +1607,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   // Viewport
   D3D12_VIEWPORT viewport{};
 
-  viewport.Width = kCliantWidth;
-  viewport.Height = kCliantHeight;
+  viewport.Width = WinAPI::kCliantWidth;
+  viewport.Height = WinAPI::kCliantHeight;
   viewport.TopLeftX = 0;
   viewport.TopLeftY = 0;
   viewport.MinDepth = 0.0f;
@@ -1616,9 +1617,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   // Scissor
   D3D12_RECT scissorRect{};
   scissorRect.left = 0;
-  scissorRect.right = kCliantWidth;
+  scissorRect.right = WinAPI::kCliantWidth;
   scissorRect.top = 0;
-  scissorRect.bottom = kCliantHeight;
+  scissorRect.bottom = WinAPI::kCliantHeight;
 
 #pragma endregion
 
@@ -1840,14 +1841,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
       {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
 
   Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(
-      0.45f, float(kCliantWidth) / float(kCliantHeight), 0.1f, 100.0f);
+      0.45f, float(WinAPI::kCliantWidth) / float(WinAPI::kCliantHeight), 0.1f,
+      100.0f);
 
 #pragma region ImGuiの初期化
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGui::StyleColorsDark();
-  ImGui_ImplWin32_Init(hwnd);
+  ImGui_ImplWin32_Init(winApi->GetHwnd());
   ImGui_ImplDX12_Init(device.Get(), swapChainDesc.BufferCount, rtvDesc.Format,
                       srvDescriptorHeap.Get(),
                       srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -1865,7 +1867,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   Input *input = nullptr;
 
   input = new Input();
-  input->Initialize(hInstance, hwnd);
+  input->Initialize(winApi->GetHinstance(), winApi->GetHwnd());
 
   SoundData soundData = SoundLoadWave("resource/You_and_Me.wav");
   bool hasPlayed = false;
@@ -1978,8 +1980,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
           MakeAffineMatrix(transformSprite.scale, transformSprite.rotate,
                            transformSprite.translate);
       Matrix4x4 viewMatrixSprite = MakeIdentity4x4();
-      Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(
-          0.0f, 0.0f, float(kCliantWidth), float(kCliantHeight), 0.0f, 100.0f);
+      Matrix4x4 projectionMatrixSprite =
+          MakeOrthographicMatrix(0.0f, 0.0f, float(WinAPI::kCliantWidth),
+                                 float(WinAPI::kCliantHeight), 0.0f, 100.0f);
       Matrix4x4 worldViewProjectionMatrixSprite =
           Multiply(projectionMatrixSprite,
                    Multiply(viewMatrixSprite, worldMatrixSprite));
@@ -1994,7 +1997,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
                            cameraTransform.translate);
       Matrix4x4 viewMatrix = Inverse(cameraMatrix);
       Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(
-          0.45f, float(kCliantWidth) / float(kCliantHeight), 0.1f, 100.0f);
+          0.45f, float(WinAPI::kCliantWidth) / float(WinAPI::kCliantHeight),
+          0.1f, 100.0f);
       Matrix4x4 worldViewProjectionMatrix =
           Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
@@ -2184,7 +2188,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   SoundUnload(&soundData);
 
   CloseHandle(fenceEvent);
-  CloseWindow(hwnd);
+  CloseWindow(winApi->GetHwnd());
 
   CoUninitialize();
 
