@@ -1,10 +1,9 @@
 #define _USE_MATH_DEFINES
 #define PI 3.14159265f
-#include <Windows.h>
-#include <cassert>
+#include "Input.h"
+#include "WinAPI.h"
 #include <chrono>
 #include <cmath>
-#include <cstdint>
 #include <d3d12.h>
 #include <dbghelp.h>
 #include <dxcapi.h>
@@ -17,15 +16,10 @@
 #include <string.h>
 #include <strsafe.h>
 #include <vector>
-#include <wrl.h>
 #include <xaudio2.h>
-#define DRECTINPUT_VERSION 0x0800 // DirectInput version 8.0
-#include "Input.h"
-#include <dinput.h>
 
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
-#include "externals/imgui/imgui.h"
 #include "externals/imgui/imgui_impl_dx12.h"
 #include "externals/imgui/imgui_impl_win32.h"
 #include <iostream>
@@ -1050,17 +1044,20 @@ Matrix4x4 MakeOrthographicMatrix(float left, float top, float right,
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   D3DResourceLeakChecker leakCheck;
 
+  WinAPI *winApi = nullptr;
+
   Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory;
   Microsoft::WRL::ComPtr<ID3D12Device> device;
 
   Microsoft::WRL::ComPtr<IXAudio2> xAudio2;
   IXAudio2MasteringVoice *masterVoice;
 
-  CoInitializeEx(0, COINIT_MULTITHREADED);
   // 例外が発生したらダンプを出力する
   SetUnhandledExceptionFilter(ExportDump);
 
-#pragma region 前準備
+  winApi = new WinAPI();
+  winApi->Initialize();
+
 #pragma region ログ
 
   std::filesystem::create_directory("logs");
@@ -1084,29 +1081,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   std::ofstream logStream(logFilePath);
 #pragma endregion
 
-  WNDCLASS wc{};
-
-  wc.lpfnWndProc = WindowProc;
-  wc.lpszClassName = L"CG2WindowClass";
-  wc.hInstance = GetModuleHandle(nullptr);
-  wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-
-  RegisterClass(&wc);
-
-  const int32_t kCliantWidth = 1280;
-  const int32_t kCliantHeight = 720;
-
-  RECT wrc = {0, 0, kCliantWidth, kCliantHeight};
-
-  AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
-
-  HWND hwnd =
-      CreateWindow(wc.lpszClassName, L"CG2", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
-                   CW_USEDEFAULT, wrc.right - wrc.left, wrc.bottom - wrc.top,
-                   nullptr, nullptr, wc.hInstance, nullptr);
-
-  ShowWindow(hwnd, SW_SHOW);
-
 #pragma region デバッグレイヤー
 
 #ifdef _DEBUG
@@ -1120,8 +1094,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     debugController->SetEnableGPUBasedValidation(TRUE);
   }
 #endif
-
-#pragma endregion
 
 #pragma endregion
 
@@ -2206,6 +2178,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 #endif
 #pragma endregion
+  delete winApi;
   delete input;
   xAudio2.Reset();
   SoundUnload(&soundData);
