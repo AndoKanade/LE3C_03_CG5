@@ -395,7 +395,6 @@ Microsoft::WRL::ComPtr<IDxcBlob> CompileShader(
     IDxcIncludeHandler *includeHandler) {
 
 #pragma region HLSLファイルを読み込む
-
   Log(ConvertString(std::format(L"Begin CompileShader, path:{}, profile:{}\n",
                                 filePath, profile)));
 

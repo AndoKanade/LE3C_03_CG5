@@ -1,8 +1,0 @@
-﻿  main.cpp
-  C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
-  main.obj : MSIL .netmodule または /GL を伴ってコンパイルされたモジュールが見つかりました。/LTCG を使用して再開始してください。リンカーのパフォーマンスを向上させるためには、コマンドラインに /LTCG を追加してください。
-  コード生成しています。
-  コード生成が終了しました。
-  CG2_Temprate.vcxproj -> C:\Lessons\CG2\CG2\x64\Development\CG2_Temprate.exe
-          1 個のファイルをコピーしました。
-          1 個のファイルをコピーしました。
