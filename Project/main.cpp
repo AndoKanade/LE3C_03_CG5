@@ -1873,13 +1873,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   bool hasPlayed = false;
 
 #pragma endregion
-  MSG msg{};
-  while (msg.message != WM_QUIT) {
+  while (true) {
 
-    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
+    if (winApi->ProcessMessage()) {
+      /// trueを返したときはゲームループを抜ける
+      break;
     } else {
       // ゲームの処理
 
