@@ -5,9 +5,11 @@ void Input::Initialize(WinAPI *winApi) {
 
   HRESULT result;
 
+  DWORD version = DIRECTINPUT_VERSION;
+  HINSTANCE hInstance = winApi->GetHinstance();
   result =
-      DirectInput8Create(winApi->GetHinstance(), DIRECTINPUT_VERSION,
-                         IID_IDirectInput8, (void **)&directInput, nullptr);
+      DirectInput8Create(hInstance, version, IID_IDirectInput8,
+                         (void **)directInput.GetAddressOf(), nullptr);
   assert(SUCCEEDED(result));
 
   result = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, NULL);

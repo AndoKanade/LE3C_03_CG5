@@ -2,7 +2,7 @@
 #include <Windows.h>
 #include <cassert>
 #include <wrl.h>
-#define DRECTINPUT_VERSION 0x0800 // DirectInput version 8.0
+#define DIRECTINPUT_VERSION 0x0800 // DirectInput version 8.0
 #include "WinAPI.h"
 #include <dinput.h>
 

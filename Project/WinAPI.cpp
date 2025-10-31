@@ -17,7 +17,6 @@ LRESULT CALLBACK WinAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam,
 void WinAPI::Initialize() {
 
   HRESULT hr = CoInitializeEx(0, COINIT_MULTITHREADED);
-  WNDCLASS wc{};
 
   wc.lpfnWndProc = WindowProc;
   wc.lpszClassName = L"CG2WindowClass";
