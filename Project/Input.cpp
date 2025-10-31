@@ -5,15 +5,11 @@ void Input::Initialize(WinAPI *winApi) {
 
   HRESULT result;
 
-#pragma region DirectInputの初期化
-
   result =
       DirectInput8Create(winApi->GetHinstance(), DIRECTINPUT_VERSION,
                          IID_IDirectInput8, (void **)&directInput, nullptr);
   assert(SUCCEEDED(result));
-#pragma endregion
 
-#pragma region キーボードの初期化
   result = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, NULL);
   assert(SUCCEEDED(result));
 
@@ -24,8 +20,6 @@ void Input::Initialize(WinAPI *winApi) {
                                          DISCL_FOREGROUND | DISCL_NONEXCLUSIVE |
                                              DISCL_NOWINKEY);
   assert(SUCCEEDED(result));
-
-#pragma endregion
 }
 
 void Input::Update() {
