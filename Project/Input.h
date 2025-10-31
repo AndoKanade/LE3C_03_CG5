@@ -3,6 +3,7 @@
 #include <cassert>
 #include <wrl.h>
 #define DRECTINPUT_VERSION 0x0800 // DirectInput version 8.0
+#include "WinAPI.h"
 #include <dinput.h>
 
 class Input {
@@ -10,13 +11,15 @@ class Input {
   //   template <class T> using Comptr = Microsoft::WRL::ComPtr<T>;
 
 public:
-  void Initialize(HINSTANCE hInstance, HWND hwnd);
+  void Initialize(WinAPI *winApi);
   void Update();
 
   bool PushKey(BYTE keyNumber);
   bool TriggerKey(BYTE keyNumber);
 
 private:
+  WinAPI *winApi_ = nullptr;
+
   Microsoft::WRL::ComPtr<IDirectInput8> directInput = nullptr;
   Microsoft::WRL::ComPtr<IDirectInputDevice8> keyboard = nullptr;
 

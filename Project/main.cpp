@@ -1,10 +1,9 @@
 #define _USE_MATH_DEFINES
 #define PI 3.14159265f
-#include <Windows.h>
-#include <cassert>
+#include "Input.h"
+#include "WinAPI.h"
 #include <chrono>
 #include <cmath>
-#include <cstdint>
 #include <d3d12.h>
 #include <dbghelp.h>
 #include <dxcapi.h>
@@ -17,15 +16,10 @@
 #include <string.h>
 #include <strsafe.h>
 #include <vector>
-#include <wrl.h>
 #include <xaudio2.h>
-#define DRECTINPUT_VERSION 0x0800 // DirectInput version 8.0
-#include "Input.h"
-#include <dinput.h>
 
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
-#include "externals/imgui/imgui.h"
 #include "externals/imgui/imgui_impl_dx12.h"
 #include "externals/imgui/imgui_impl_win32.h"
 #include <iostream>
@@ -1050,17 +1044,22 @@ Matrix4x4 MakeOrthographicMatrix(float left, float top, float right,
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   D3DResourceLeakChecker leakCheck;
 
+  WinAPI *winApi = nullptr;
+
+  Input *input = nullptr;
+
   Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory;
   Microsoft::WRL::ComPtr<ID3D12Device> device;
 
   Microsoft::WRL::ComPtr<IXAudio2> xAudio2;
   IXAudio2MasteringVoice *masterVoice;
 
-  CoInitializeEx(0, COINIT_MULTITHREADED);
   // 例外が発生したらダンプを出力する
   SetUnhandledExceptionFilter(ExportDump);
 
-#pragma region 前準備
+  winApi = new WinAPI();
+  winApi->Initialize();
+
 #pragma region ログ
 
   std::filesystem::create_directory("logs");
@@ -1084,29 +1083,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   std::ofstream logStream(logFilePath);
 #pragma endregion
 
-  WNDCLASS wc{};
-
-  wc.lpfnWndProc = WindowProc;
-  wc.lpszClassName = L"CG2WindowClass";
-  wc.hInstance = GetModuleHandle(nullptr);
-  wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-
-  RegisterClass(&wc);
-
-  const int32_t kCliantWidth = 1280;
-  const int32_t kCliantHeight = 720;
-
-  RECT wrc = {0, 0, kCliantWidth, kCliantHeight};
-
-  AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
-
-  HWND hwnd =
-      CreateWindow(wc.lpszClassName, L"CG2", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
-                   CW_USEDEFAULT, wrc.right - wrc.left, wrc.bottom - wrc.top,
-                   nullptr, nullptr, wc.hInstance, nullptr);
-
-  ShowWindow(hwnd, SW_SHOW);
-
 #pragma region デバッグレイヤー
 
 #ifdef _DEBUG
@@ -1120,8 +1096,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     debugController->SetEnableGPUBasedValidation(TRUE);
   }
 #endif
-
-#pragma endregion
 
 #pragma endregion
 
@@ -1217,8 +1191,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
   Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain = nullptr;
   DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-  swapChainDesc.Width = kCliantWidth;
-  swapChainDesc.Height = kCliantHeight;
+  swapChainDesc.Width = WinAPI::kCliantWidth;
+  swapChainDesc.Height = WinAPI::kCliantHeight;
   swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
   swapChainDesc.SampleDesc.Count = 1;
   swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -1228,7 +1202,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   // コマンドキュー、ウィンドウハンドル、スワップチェインの設定
 
   hr = dxgiFactory->CreateSwapChainForHwnd(
-      commandQueue.Get(), hwnd, &swapChainDesc, nullptr, nullptr,
+      commandQueue.Get(), winApi->GetHwnd(), &swapChainDesc, nullptr, nullptr,
       reinterpret_cast<IDXGISwapChain1 **>(swapChain.GetAddressOf()));
   // スワップチェインの生成に失敗したら起動しない
   assert(SUCCEEDED(hr));
@@ -1535,7 +1509,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 #pragma region DepthStencillTextureを生成する
 
   Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource =
-      CreateDepthStencilResource(device, kCliantWidth, kCliantHeight);
+      CreateDepthStencilResource(device, WinAPI::kCliantWidth,
+                                 WinAPI::kCliantHeight);
 
 #pragma endregion
 
@@ -1634,8 +1609,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   // Viewport
   D3D12_VIEWPORT viewport{};
 
-  viewport.Width = kCliantWidth;
-  viewport.Height = kCliantHeight;
+  viewport.Width = WinAPI::kCliantWidth;
+  viewport.Height = WinAPI::kCliantHeight;
   viewport.TopLeftX = 0;
   viewport.TopLeftY = 0;
   viewport.MinDepth = 0.0f;
@@ -1644,9 +1619,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   // Scissor
   D3D12_RECT scissorRect{};
   scissorRect.left = 0;
-  scissorRect.right = kCliantWidth;
+  scissorRect.right = WinAPI::kCliantWidth;
   scissorRect.top = 0;
-  scissorRect.bottom = kCliantHeight;
+  scissorRect.bottom = WinAPI::kCliantHeight;
 
 #pragma endregion
 
@@ -1868,14 +1843,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
       {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
 
   Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(
-      0.45f, float(kCliantWidth) / float(kCliantHeight), 0.1f, 100.0f);
+      0.45f, float(WinAPI::kCliantWidth) / float(WinAPI::kCliantHeight), 0.1f,
+      100.0f);
 
 #pragma region ImGuiの初期化
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGui::StyleColorsDark();
-  ImGui_ImplWin32_Init(hwnd);
+  ImGui_ImplWin32_Init(winApi->GetHwnd());
   ImGui_ImplDX12_Init(device.Get(), swapChainDesc.BufferCount, rtvDesc.Format,
                       srvDescriptorHeap.Get(),
                       srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -1890,10 +1866,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 #pragma endregion
 
-  Input *input = nullptr;
-
   input = new Input();
-  input->Initialize(hInstance, hwnd);
+  input->Initialize(winApi);
 
   SoundData soundData = SoundLoadWave("resource/You_and_Me.wav");
   bool hasPlayed = false;
@@ -2006,8 +1980,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
           MakeAffineMatrix(transformSprite.scale, transformSprite.rotate,
                            transformSprite.translate);
       Matrix4x4 viewMatrixSprite = MakeIdentity4x4();
-      Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(
-          0.0f, 0.0f, float(kCliantWidth), float(kCliantHeight), 0.0f, 100.0f);
+      Matrix4x4 projectionMatrixSprite =
+          MakeOrthographicMatrix(0.0f, 0.0f, float(WinAPI::kCliantWidth),
+                                 float(WinAPI::kCliantHeight), 0.0f, 100.0f);
       Matrix4x4 worldViewProjectionMatrixSprite =
           Multiply(projectionMatrixSprite,
                    Multiply(viewMatrixSprite, worldMatrixSprite));
@@ -2022,7 +1997,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
                            cameraTransform.translate);
       Matrix4x4 viewMatrix = Inverse(cameraMatrix);
       Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(
-          0.45f, float(kCliantWidth) / float(kCliantHeight), 0.1f, 100.0f);
+          0.45f, float(WinAPI::kCliantWidth) / float(WinAPI::kCliantHeight),
+          0.1f, 100.0f);
       Matrix4x4 worldViewProjectionMatrix =
           Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 
@@ -2206,14 +2182,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 #endif
 #pragma endregion
+  delete winApi;
+
   delete input;
+  input = nullptr;
+
   xAudio2.Reset();
   SoundUnload(&soundData);
 
   CloseHandle(fenceEvent);
-  CloseWindow(hwnd);
 
-  CoUninitialize();
+  winApi->Finalize();
+
+  winApi = nullptr;
 
   return 0;
 }
