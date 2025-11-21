@@ -19,6 +19,12 @@
     <Filter Include="リソース ファイル\shader">
       <UniqueIdentifier>{6cb2f2c7-2335-4542-9244-0fa7568a7588}</UniqueIdentifier>
     </Filter>
+    <Filter Include="リソース ファイル\shader\Object">
+      <UniqueIdentifier>{b8ec29fe-2927-4854-8d7c-fd55d66db12d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="リソース ファイル\shader\Particle">
+      <UniqueIdentifier>{bd42907d-b6c4-4e66-9472-540398ebfc66}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -53,14 +59,17 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="resource\shader\Object3d.hlsli">
-      <Filter>リソース ファイル\shader</Filter>
-    </None>
     <None Include="resource\shader\Object3d.PS.hlsl">
-      <Filter>リソース ファイル\shader</Filter>
+      <Filter>リソース ファイル\shader\Object</Filter>
+    </None>
+    <None Include="resource\shader\Object3d.hlsli">
+      <Filter>リソース ファイル\shader\Object</Filter>
     </None>
     <None Include="resource\shader\Object3d.VS.hlsl">
-      <Filter>リソース ファイル\shader</Filter>
+      <Filter>リソース ファイル\shader\Object</Filter>
+    </None>
+    <None Include="Particle.hlsli">
+      <Filter>リソース ファイル\shader\Particle</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -107,5 +116,13 @@
     <ResourceCompile Include="CG2_Temprate.rc">
       <Filter>リソース ファイル</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Particle.PS.hlsl">
+      <Filter>リソース ファイル\shader\Particle</Filter>
+    </FxCompile>
+    <FxCompile Include="Particle.VS.hlsl">
+      <Filter>リソース ファイル\shader\Particle</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
