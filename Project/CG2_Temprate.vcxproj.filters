@@ -68,7 +68,7 @@
     <None Include="resource\shader\Object3d.VS.hlsl">
       <Filter>リソース ファイル\shader\Object</Filter>
     </None>
-    <None Include="Particle.hlsli">
+    <None Include="resource\shader\Particle.hlsli">
       <Filter>リソース ファイル\shader\Particle</Filter>
     </None>
   </ItemGroup>
@@ -118,10 +118,10 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Particle.PS.hlsl">
+    <FxCompile Include="resource\shader\Particle.VS.hlsl">
       <Filter>リソース ファイル\shader\Particle</Filter>
     </FxCompile>
-    <FxCompile Include="Particle.VS.hlsl">
+    <FxCompile Include="resource\shader\Particle.PS.hlsl">
       <Filter>リソース ファイル\shader\Particle</Filter>
     </FxCompile>
   </ItemGroup>

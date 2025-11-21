@@ -1338,6 +1338,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   descriptionRootSignature.pParameters = rootParameters;
   descriptionRootSignature.NumParameters = _countof(rootParameters);
 
+  D3D12_DESCRIPTOR_RANGE descriptorRangeForInstancing[1] = {};
+
+  descriptorRangeForInstancing[0].BaseShaderRegister = 0;
+  descriptorRangeForInstancing[0].NumDescriptors = 1;
+  descriptorRangeForInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+  descriptorRangeForInstancing[0].OffsetInDescriptorsFromTableStart =
+      D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+  D3D12_ROOT_PARAMETER rootParametersInstancing[4] = {};
+
+  rootParametersInstancing[1].ParameterType =
+      D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+  rootParametersInstancing[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+  rootParametersInstancing[1].DescriptorTable.pDescriptorRanges =
+      descriptorRangeForInstancing;
+  rootParametersInstancing[1].DescriptorTable.NumDescriptorRanges =
+      _countof(descriptorRangeForInstancing);
+
 #pragma endregion
 
 #pragma region Sampler
@@ -1511,6 +1529,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   indexBufferViewSprite.Format = DXGI_FORMAT_R32_UINT;
 
 #pragma endregion
+
+  const uint32_t kNumInstance = 10;
+  Microsoft::WRL::ComPtr<ID3D12Resource> instanceResource =
+      CreateBufferResource(device, sizeof(TransformationMatrix) * kNumInstance);
+
+  TransformationMatrix *instancingData = nullptr;
+  instanceResource->Map(0, nullptr, reinterpret_cast<void **>(&instancingData));
+
+  for (uint32_t index = 0; index < kNumInstance; ++index) {
+    instancingData[index].WVP = MakeIdentity4x4();
+    instancingData[index].World = MakeIdentity4x4();
+  }
 
 #pragma region DepthStencillTextureを生成する
 
@@ -1709,6 +1739,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
 #pragma endregion
 
+  D3D12_SHADER_RESOURCE_VIEW_DESC instancingSrvDesc{};
+  instancingSrvDesc.Format = DXGI_FORMAT_UNKNOWN;
+  instancingSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+  instancingSrvDesc.Shader4ComponentMapping =
+      D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+  instancingSrvDesc.Buffer.FirstElement = 0;
+  instancingSrvDesc.Buffer.NumElements = kNumInstance;
+  instancingSrvDesc.Buffer.StructureByteStride = sizeof(TransformationMatrix);
+  instancingSrvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+  D3D12_CPU_DESCRIPTOR_HANDLE instancingSrvHandleCPU =
+      GetCPUDescriptorHandle(srvDescriptorHeap.Get(), descriptorSizeSRV, 3);
+  D3D12_GPU_DESCRIPTOR_HANDLE instancingSrvHandleGPU =
+      GetGPUDscriptorHandle(srvDescriptorHeap.Get(), descriptorSizeSRV, 3);
+  device->CreateShaderResourceView(instanceResource.Get(), &instancingSrvDesc,
+                                   instancingSrvHandleCPU);
+
 #pragma region dsvHandleの取得
   D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle =
       dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
@@ -1851,6 +1897,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
   Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(
       0.45f, float(WinAPI::kCliantWidth) / float(WinAPI::kCliantHeight), 0.1f,
       100.0f);
+
+  Transform transforms[kNumInstance];
+  for (uint32_t index = 0; index < kNumInstance; ++index) {
+    transforms[index].scale = {1.0f, 1.0f, 1.0f};
+    transforms[index].rotate = {0.0f, 0.0f, 0.0f};
+    transforms[index].translate = {index * 0.1f, index * 0.1f, index * 0.1f};
+  }
 
 #pragma region ImGuiの初期化
 
@@ -2003,6 +2056,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
       //     transform.rotate.y += 0.01f;
       *wvpData = {worldViewProjectionMatrix, worldMatrix};
 
+      for (uint32_t index = 0; index < kNumInstance, ++index;) {
+        Matrix4x4 worldMatrix =
+            MakeAffineMatrix(transforms[index].scale, transforms[index].rotate,
+                             transforms[index].translate);
+        Matrix4x4 worldViewProjectionMatrix =
+            Multiply(worldMatrix, projectionMatrix);
+        instancingData[index].WVP = worldViewProjectionMatrix;
+        instancingData[index].World = worldMatrix;
+      }
+
 #pragma endregion
       input->Update();
 
@@ -2077,12 +2140,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
           1, wvpResource->GetGPUVirtualAddress());
       commandList.Get()->SetGraphicsRootConstantBufferView(
           3, directionalLightResource->GetGPUVirtualAddress());
-      commandList.Get()->SetGraphicsRootDescriptorTable(
-          2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
+      commandList.Get()->SetGraphicsRootDescriptorTable(1,
+                                                        instancingSrvHandleGPU);
       //     uint32_t indexCount = kSubdivision * kSubdivision * 6;
 
-      commandList.Get()->DrawInstanced(UINT(modelData.vertices.size()), 1, 0,
-                                       0);
+      commandList.Get()->DrawInstanced(UINT(modelData.vertices.size()),
+                                       kNumInstance, 0, 0);
 
       commandList.Get()->IASetVertexBuffers(0, 1, &vertexBufferViewSprite);
       commandList.Get()->IASetIndexBuffer(&indexBufferViewSprite);
