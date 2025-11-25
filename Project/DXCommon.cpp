@@ -3,6 +3,7 @@
 #include "Logger.h"
 #include "StringUtility.h"
 
+
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
 #include "externals/imgui/imgui_impl_dx12.h"
@@ -108,6 +109,36 @@ void DXCommon::InitDevice() {
   // 生成がうまくいかなかったので起動しない
   assert(SUCCEEDED(hr));
   Log("Complete create D3D12Device!!\n");
+#pragma region エラー放置しない処理
+#ifdef _DEBUG
+  Microsoft::WRL::ComPtr<ID3D12InfoQueue> infoQueue = nullptr;
+  if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&infoQueue)))) {
+    // やばいエラー時に止まる
+    infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+    // 警告時に止まる
+    infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+
+    // エラー時に止まる
+    infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+
+    // 抑制するメッセージの設定
+    D3D12_MESSAGE_ID denyIds[] = {
+        D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE};
+
+    // 抑制するレベル
+    D3D12_MESSAGE_SEVERITY severrities[] = {D3D12_MESSAGE_SEVERITY_INFO};
+    D3D12_INFO_QUEUE_FILTER filter{};
+    filter.DenyList.NumIDs = _countof(denyIds);
+    filter.DenyList.pIDList = denyIds;
+    filter.DenyList.NumSeverities = _countof(severrities);
+    filter.DenyList.pSeverityList = severrities;
+
+    // 指定したメッセージの表示を抑制する
+    infoQueue->PushStorageFilter(&filter);
+  }
+
+#endif
+#pragma endregion
 }
 
 void DXCommon::InitCommand() {
@@ -215,12 +246,13 @@ void DXCommon::InitRenderTargetView() {
 
   for (uint32_t i = 0; i < kNumBackBuffers; ++i) {
 
-    hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffers[i]));
+    hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&swapChainResources[i]));
     assert(SUCCEEDED(hr));
 
     rtvHandles[i] = rtvHandle;
 
-    device->CreateRenderTargetView(backBuffers[i].Get(), &rtvDesc, rtvHandle);
+    device->CreateRenderTargetView(swapChainResources[i].Get(), &rtvDesc,
+                                   rtvHandle);
 
     rtvHandle.ptr += descriptorSizeRTV;
   }

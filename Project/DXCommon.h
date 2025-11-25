@@ -33,7 +33,6 @@ public:
   Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap = nullptr;
   Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = nullptr;
 
-  std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, 2> backBuffers;
   D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
   D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2];
 
