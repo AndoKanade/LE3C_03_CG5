@@ -35,6 +35,7 @@ public:
 
   D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
   D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2];
+  std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, 2> backBuffers;
 
   Microsoft::WRL::ComPtr<ID3D12Fence> fence = nullptr;
 
