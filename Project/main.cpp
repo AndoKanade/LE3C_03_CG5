@@ -541,14 +541,6 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU2 =
 		dxCommon->GetSRVGPUDescriptorHandle(2);
 
-	//textureSrvHandleCPU.ptr +=
-	//	dxCommon->GetDevice()->GetDescriptorHandleIncrementSize(
-	//		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	//textureSrvHandleGPU.ptr +=
-	//	dxCommon->GetDevice()->GetDescriptorHandleIncrementSize(
-	//		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 	//  SRVを生成する
 	dxCommon->GetDevice()->CreateShaderResourceView(
 		textureResource.Get(),&srvDesc,textureSrvHandleCPU);
