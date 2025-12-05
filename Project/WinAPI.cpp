@@ -30,7 +30,7 @@ void WinAPI::Initialize() {
   AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
 
   hwnd =
-      CreateWindow(wc.lpszClassName, L"GE3", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
+      CreateWindow(wc.lpszClassName, L"LE2C_03_アンドウ_カナデ", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
                    CW_USEDEFAULT, wrc.right - wrc.left, wrc.bottom - wrc.top,
                    nullptr, nullptr, wc.hInstance, nullptr);
 
