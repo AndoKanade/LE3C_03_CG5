@@ -27,6 +27,7 @@
 #include "externals/imgui/imgui_impl_win32.h"
 #include <iostream>
 #include <map>
+#include "TextureManager.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd,
 	UINT msg,
@@ -402,26 +403,8 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	Sprite* sprite = new Sprite();
 	sprite->Initialize(spriteCommon);
 
-	std::vector<Sprite*>sprites;
-	float startX = 100.0f;
-	float startY = 200.0f;
-	// ずらす幅
-	float gap = 150.0f;
+	TextureManager::GetInstance()->Initialize(dxCommon);
 
-	for(uint32_t i = 0; i < 5; ++i){
-		Sprite* newSprite = new Sprite();
-		newSprite->Initialize(spriteCommon);
-
-		// x座標を i * gap 分だけずらす
-		// i=0 のときは 100, i=1 のときは 250, i=2 のときは 400... となる
-		Vector2 position = {startX + (i * gap), startY};
-
-		// ※お手持ちのエンジンに合わせて関数名は調整してください
-		// 例: newSprite->SetPosition(position); または newSprite->transform.translate = position; など
-		newSprite->SetPosition(position);
-
-		sprites.push_back(newSprite);
-	}
 
 	SoundData soundData = SoundLoadWave("resource/You_and_Me.wav");
 	bool hasPlayed = false;
@@ -513,62 +496,12 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 #pragma region Textureの読み込み
 
-	DirectX::ScratchImage mipImages =
-		dxCommon->LoadTexture("resource/uvChecker.png");
-	const DirectX::TexMetadata metadata = mipImages.GetMetadata();
-	Microsoft::WRL::ComPtr<ID3D12Resource> textureResource =
-		dxCommon->CreateTextureResource(metadata);
-	Microsoft::WRL::ComPtr<ID3D12Resource> intermadiate =
-		dxCommon->UploadTextureData(textureResource,mipImages);
+	// UVチェッカーの読み込み
+	// (内部でリソース作成や転送まで全自動で行われます)
+	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
 
-	DirectX::ScratchImage mipImages2 =
-		dxCommon->LoadTexture(modelData.material.textureFilePath);
-	const DirectX::TexMetadata& metadata2 = mipImages2.GetMetadata();
-	Microsoft::WRL::ComPtr<ID3D12Resource> textureResource2 =
-		dxCommon->CreateTextureResource(metadata2);
-	Microsoft::WRL::ComPtr<ID3D12Resource> intermadiate2 =
-		dxCommon->UploadTextureData(textureResource2,mipImages2);
-
-#pragma endregion
-
-#pragma region SRVを生成する
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-
-	srvDesc.Format = metadata.format;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = UINT(metadata.mipLevels);
-
-	//  ２枚目
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc2{};
-
-	srvDesc2.Format = metadata.format;
-	srvDesc2.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc2.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc2.Texture2D.MipLevels = UINT(metadata2.mipLevels);
-
-	// SRVを作成するDescriptorHeapの場所を決める
-
-	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU =
-		dxCommon->GetSRVCPUDescriptorHandle(0);
-
-	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU =
-		dxCommon->GetSRVGPUDescriptorHandle(0);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 =
-		dxCommon->GetSRVCPUDescriptorHandle(2);
-
-	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU2 =
-		dxCommon->GetSRVGPUDescriptorHandle(2);
-
-	//  SRVを生成する
-	dxCommon->GetDevice()->CreateShaderResourceView(
-		textureResource.Get(),&srvDesc,textureSrvHandleCPU);
-
-	//   SRVを生成する
-	dxCommon->GetDevice()->CreateShaderResourceView(
-		textureResource2.Get(),&srvDesc2,textureSrvHandleCPU2);
+	// モデル用テクスチャの読み込み
+	TextureManager::GetInstance()->LoadTexture(modelData.material.textureFilePath);
 
 #pragma endregion
 
@@ -691,10 +624,6 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 			sprite->Update();
 
-			for(Sprite* sprite : sprites){
-				sprite->Update();
-			}
-
 			//#ifdef _DEBUG
 			//			ImGui_ImplDX12_NewFrame();
 			//			ImGui_ImplWin32_NewFrame();
@@ -812,9 +741,6 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			dxCommon->PreDraw();
 
 			spriteCommon->Draw();
-			for(Sprite* sprite : sprites){
-				sprite->Draw();
-			}
 
 			// 三角形の色を変える
 			//materialResource->Map(0,nullptr,reinterpret_cast<void**>(&material));
@@ -857,11 +783,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 	Log("unkillable demon king\n");
 
-
-	// ゲーム終了処理など
-	for(Sprite* sprite : sprites){
-		delete sprite;
-	}
+	TextureManager::GetInstance()->Finalize();
 
 	delete sprite;
 	sprite = nullptr;

@@ -9,14 +9,35 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="リソース ファイル">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="imgui">
       <UniqueIdentifier>{436aae08-4a93-4ff9-93c6-2e3053c39372}</UniqueIdentifier>
     </Filter>
-    <Filter Include="リソース ファイル\shader">
+    <Filter Include="ソース ファイル\Base">
+      <UniqueIdentifier>{0587a549-a220-4151-b8bc-94a28041f7cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Input">
+      <UniqueIdentifier>{8fdda6ba-f628-4959-8578-cd9516becc3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\2D">
+      <UniqueIdentifier>{b3031b9c-38fa-4cb3-9853-c84b5be4874a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Base">
+      <UniqueIdentifier>{ea9f1a4d-919a-4acb-82f6-7ff649b49414}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Input">
+      <UniqueIdentifier>{d5cf60e1-0803-4b22-bca2-6adc28cd41bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Math">
+      <UniqueIdentifier>{b0443006-9d24-4767-bd0d-4c5d264a5e08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\2D">
+      <UniqueIdentifier>{a5c2cc11-a888-4584-8a20-0a7847285e61}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Resources\shader">
       <UniqueIdentifier>{6cb2f2c7-2335-4542-9244-0fa7568a7588}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -45,37 +66,40 @@
     <ClCompile Include="externals\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="Input.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="WinAPI.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="DXCommon.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Base</Filter>
     </ClCompile>
     <ClCompile Include="Logger.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="WinAPI.cpp">
+      <Filter>ソース ファイル\Base</Filter>
     </ClCompile>
     <ClCompile Include="StringUtility.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Base</Filter>
     </ClCompile>
-    <ClCompile Include="SpriteCommon.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="Input.cpp">
+      <Filter>ソース ファイル\Input</Filter>
     </ClCompile>
     <ClCompile Include="Sprite.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\2D</Filter>
+    </ClCompile>
+    <ClCompile Include="SpriteCommon.cpp">
+      <Filter>ソース ファイル\2D</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureManager.cpp">
+      <Filter>ソース ファイル\2D</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resource\shader\Object3d.hlsli">
-      <Filter>リソース ファイル\shader</Filter>
+      <Filter>Resources\shader</Filter>
     </None>
     <None Include="resource\shader\Object3d.PS.hlsl">
-      <Filter>リソース ファイル\shader</Filter>
+      <Filter>Resources\shader</Filter>
     </None>
     <None Include="resource\shader\Object3d.VS.hlsl">
-      <Filter>リソース ファイル\shader</Filter>
+      <Filter>Resources\shader</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -103,32 +127,32 @@
     <ClInclude Include="externals\imgui\imstb_truetype.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Input.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="WinAPI.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="DXCommon.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Base</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Base</Filter>
     </ClInclude>
     <ClInclude Include="StringUtility.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Base</Filter>
     </ClInclude>
-    <ClInclude Include="SpriteCommon.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="WinAPI.h">
+      <Filter>ヘッダー ファイル\Base</Filter>
     </ClInclude>
-    <ClInclude Include="Sprite.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="Input.h">
+      <Filter>ヘッダー ファイル\Input</Filter>
     </ClInclude>
     <ClInclude Include="Math.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Sprite.h">
+      <Filter>ヘッダー ファイル\2D</Filter>
+    </ClInclude>
+    <ClInclude Include="SpriteCommon.h">
+      <Filter>ヘッダー ファイル\2D</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureManager.h">
+      <Filter>ヘッダー ファイル\2D</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -138,7 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CG2_Temprate.rc">
-      <Filter>リソース ファイル</Filter>
+      <Filter>Resources</Filter>
     </ResourceCompile>
   </ItemGroup>
 </Project>

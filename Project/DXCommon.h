@@ -51,6 +51,8 @@ public:
 	uint64_t fenceValue = 0;
 	HANDLE fenceEvent = nullptr;
 
+	static const uint32_t kMaxSRVCount;
+
 #pragma endregion
 
 #pragma region メンバ関数
@@ -96,7 +98,6 @@ public:
 		UploadTextureData(const Microsoft::WRL::ComPtr<ID3D12Resource>& texture,
 			const DirectX::ScratchImage& mipImages);
 
-	static DirectX::ScratchImage LoadTexture(const std::string& filePath);
 #pragma endregion
 
 	ID3D12Device* GetDevice() const{ return device.Get(); }
