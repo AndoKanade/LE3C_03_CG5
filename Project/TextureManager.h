@@ -33,6 +33,8 @@ private: // ▼ 自分だけが知っていればいい情報
     // (メンバ変数には「_」をつけるルールに統一すると見やすいです)
     std::vector<TextureData> textureDatas_;
 
+    static uint32_t kSRVIndexTop;
+
     // DXCommonのポインタ
     DXCommon* dxCommon_ = nullptr;
 
@@ -58,4 +60,7 @@ public: // ▼ 外部（MainやSprite）から呼び出したい機能
     // ★追加: テクスチャのメタデータ（サイズなど）を取得する関数
     // (スプライトのサイズを画像のサイズに合わせたい時などに使います)
     const DirectX::TexMetadata& GetMetaData(const std::string& filePath);
+
+    uint32_t GetTextureIndexbyFilePath(const std::string& filePath);
+    D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandleGPU(uint32_t textureIndex);
 };

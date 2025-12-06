@@ -395,15 +395,21 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	input = new Input();
 	input->Initialize(winApi);
 
+	TextureManager::GetInstance()->Initialize(dxCommon);
+	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
+	TextureManager::GetInstance()->LoadTexture("resource/monsterball.png");
+
 	SpriteCommon* spriteCommon = nullptr;
 
 	spriteCommon = new SpriteCommon;
 	spriteCommon->Initialize(dxCommon);
 
 	Sprite* sprite = new Sprite();
-	sprite->Initialize(spriteCommon);
+	sprite->Initialize(spriteCommon,"resource/uvChecker.png");
 
-	TextureManager::GetInstance()->Initialize(dxCommon);
+	Sprite* spriteBall = new Sprite();
+	spriteBall->Initialize(spriteCommon,"resource/monsterball.png");
+	spriteBall->SetPosition({200.0f,0.0f});
 
 
 	SoundData soundData = SoundLoadWave("resource/You_and_Me.wav");
@@ -623,6 +629,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			// }
 
 			sprite->Update();
+			spriteBall->Update();
 
 			//#ifdef _DEBUG
 			//			ImGui_ImplDX12_NewFrame();
@@ -766,6 +773,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			//	UINT(modelData.vertices.size()),1,0,0);
 
 			sprite->Draw();
+			spriteBall->Draw();
 
 			//	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
 	//				dxCommon->commandList.Get());
@@ -785,6 +793,8 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 	TextureManager::GetInstance()->Finalize();
 
+	delete spriteBall;
+	spriteBall = nullptr;
 	delete sprite;
 	sprite = nullptr;
 	delete spriteCommon;

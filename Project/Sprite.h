@@ -2,7 +2,7 @@
 #include"Math.h"
 #include <wrl.h>
 #include <d3d12.h>
-
+#include<string>
 
 class SpriteCommon;
 class Sprite{
@@ -58,7 +58,7 @@ public:
 	Matrix4x4 viewMatrix;
 	Matrix4x4 projectionMatrix;
 
-	void Initialize(SpriteCommon* spriteCommon);
+	void Initialize(SpriteCommon* spriteCommon,std::string textureFilePath);
 	void Update();
 	void Draw();
 
@@ -86,6 +86,6 @@ private:
 	float rotation = 0.0f;
 	Vector2 size = {640.0f,360.0f};
 
-
+	uint32_t textureIndex = 0;
 };
 

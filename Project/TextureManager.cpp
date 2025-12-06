@@ -3,6 +3,7 @@
 #include "StringUtility.h"
 #include <algorithm>
 
+uint32_t TextureManager::kSRVIndexTop = 1;
 TextureManager* TextureManager::instance = nullptr;
 TextureManager* TextureManager::GetInstance(){
 	if(instance == nullptr){
@@ -35,7 +36,7 @@ void TextureManager::LoadTexture(const std::string& filePath){
 		// すでに読み込み済みなら、何もせず終了
 		return;
 	}
-
+	assert(textureDatas_.size() + kSRVIndexTop < DXCommon::kMaxSRVCount);
 
 	DirectX::ScratchImage image{};
 	std::wstring filePathW = StringUtility::ConvertString(filePath);
@@ -55,7 +56,7 @@ void TextureManager::LoadTexture(const std::string& filePath){
 	textureData.filePath = filePath;
 	textureData.metadata = mipImages.GetMetadata();
 	textureData.resource = dxCommon_->CreateTextureResource(textureData.metadata);
-	uint32_t srvIndex = static_cast<uint32_t>(textureDatas_.size() - 1);
+	uint32_t srvIndex = static_cast<uint32_t>(textureDatas_.size() - 1) + kSRVIndexTop;
 
 	textureData.srvHandleCPU = dxCommon_->GetSRVCPUDescriptorHandle(srvIndex);
 	textureData.srvHandleGPU = dxCommon_->GetSRVGPUDescriptorHandle(srvIndex);
@@ -99,4 +100,32 @@ const DirectX::TexMetadata& TextureManager::GetMetaData(const std::string& fileP
 	// 見つからなかった場合（例外処理が必要だが、一旦デフォルト値を返す）
 	static DirectX::TexMetadata defaultMetadata{};
 	return defaultMetadata;
+}
+
+uint32_t TextureManager::GetTextureIndexbyFilePath(const std::string& filePath){
+	auto it = std::find_if(
+		textureDatas_.begin(),
+		textureDatas_.end(),
+		[&](const auto& textureData){ return textureData.filePath == filePath; }
+	);
+
+	if(it != textureDatas_.end()){
+		uint32_t textureIndex = static_cast<uint32_t>(std::distance(textureDatas_.begin(),it));
+		return textureIndex;
+	}
+	assert(0);
+	return 0;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::GetSrvHandleGPU(uint32_t textureIndex){
+	// 1. 範囲外指定違反チェック
+	// 「テクスチャ番号が正常範囲内である」かを確認
+	assert(textureIndex < textureDatas_.size());
+
+	// 2. テクスチャデータの参照を取得
+	// 配列（またはvector）から直接インデックスでアクセスします
+	TextureData& textureData = textureDatas_[textureIndex];
+
+	// 3. 保持しているGPUハンドルを返す
+	return textureData.srvHandleGPU;
 }

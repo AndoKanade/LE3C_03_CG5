@@ -1,11 +1,13 @@
 #include "Sprite.h"
 #include "SpriteCommon.h"
+#include "TextureManager.h"
 
-void Sprite::Initialize(SpriteCommon* spriteCommon){
+void Sprite::Initialize(SpriteCommon* spriteCommon,std::string textureFilePath){
 	this->spriteCommon = spriteCommon;
 	CreateVertexData();
 	CreateMaterialData();
 	CreateTransformationMatrixData();
+	textureIndex = TextureManager::GetInstance()->GetTextureIndexbyFilePath(textureFilePath);
 }
 
 void Sprite::Update(){
@@ -83,7 +85,7 @@ void Sprite::Draw(){
 	spriteCommon->GetDxCommon()->commandList.Get()->SetGraphicsRootConstantBufferView(
 		1,transformationMatrixResource->GetGPUVirtualAddress());
 	spriteCommon->GetDxCommon()->commandList.Get()->SetGraphicsRootDescriptorTable(
-		2,spriteCommon->GetDxCommon()->GetSRVGPUDescriptorHandle(0));
+		2,TextureManager::GetInstance()->GetSrvHandleGPU(textureIndex));
 
 	spriteCommon->GetDxCommon()->commandList->DrawIndexedInstanced(6,1,0,0,0);
 
