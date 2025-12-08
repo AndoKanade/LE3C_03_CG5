@@ -58,22 +58,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam){
 	}
 	return DefWindowProcW(hwnd,msg,wparam,lparam);
 }
-
-struct DirectionalLight{
-	Vector4 color;     // ライトの色
-	Vector3 direction; // ライトの方向
-	float intensity;   // ライトの強度
-};
-
-struct MaterialData{
-	std::string textureFilePath;
-};
-
-struct ModelData{
-	std::vector<Sprite::VertexData> vertices;
-	MaterialData material;
-};
-
 struct D3DResourceLeakChecker{
 	~D3DResourceLeakChecker(){
 
@@ -255,121 +239,6 @@ static LONG WINAPI ExportDump(EXCEPTION_POINTERS* exception){
 }
 #pragma endregion
 
-#pragma region MaterialTemplate関数
-MaterialData LoadMaterialTemplateFile(const std::string& directoryPath,
-	const std::string& filename){
-	MaterialData materialData;
-	std::string line;
-	std::ifstream file(directoryPath + "/" + filename);
-
-	assert(file.is_open());
-
-	while(std::getline(file,line)){
-		std::string identifier;
-		std::istringstream s(line);
-
-		s >> identifier;
-
-		if(identifier == "map_Kd"){
-			std::string textureFilename;
-			s >> textureFilename;
-
-			materialData.textureFilePath = directoryPath + "/" + textureFilename;
-		}
-	}
-	return materialData;
-}
-#pragma endregion
-
-#pragma region Objファイルを読む関数
-
-ModelData LoadObjFile(const std::string& directoryPath,
-	const std::string& filename){
-	ModelData modelData;
-	std::vector<Vector4> positions;
-	std::vector<Vector3> normals;
-	std::vector<Vector2> texcoords;
-
-	std::ifstream file(directoryPath + "/" + filename);
-	if(!file.is_open()){
-		std::cerr << "Failed to open OBJ file: " << directoryPath + "/" + filename
-			<< std::endl;
-		return {};
-	}
-
-	std::string line;
-
-	while(std::getline(file,line)){
-		std::istringstream s(line);
-		std::string identifier;
-		s >> identifier;
-
-		if(identifier == "v"){
-			Vector4 position{};
-
-			s >> position.x >> position.y >> position.z;
-
-			position.w = 1.0f;
-			//  position.x *= -1.0f;
-			positions.push_back(position);
-
-		} else if(identifier == "vt"){
-			Vector2 texcoord{};
-			s >> texcoord.x >> texcoord.y;
-
-			texcoord.y = 1.0f - texcoord.y;
-			texcoords.push_back(texcoord);
-
-		} else if(identifier == "vn"){
-
-			Vector3 normal{};
-
-			s >> normal.x >> normal.y >> normal.z;
-			//  normal.x *= -1.0f;
-			normals.push_back(normal);
-
-		} else if(identifier == "f"){
-
-			Sprite::VertexData triangle[3] = {};
-
-			for(int32_t faceVertex = 0; faceVertex < 3; ++faceVertex){
-				std::string vdef;
-				s >> vdef;
-
-				std::istringstream vstream(vdef);
-				uint32_t elementIndices[3];
-
-				for(int32_t element = 0; element < 3; ++element){
-					std::string index;
-					std::getline(vstream,index,'/');
-					elementIndices[element] = std::stoi(index);
-				}
-
-				Vector4 position = positions[elementIndices[0] - 1];
-				Vector2 texcoord = texcoords[elementIndices[1] - 1];
-				Vector3 normal = normals[elementIndices[2] - 1];
-
-				triangle[faceVertex] = {position, texcoord, normal};
-			}
-			modelData.vertices.push_back(triangle[2]);
-			modelData.vertices.push_back(triangle[1]);
-			modelData.vertices.push_back(triangle[0]);
-
-		} else if(identifier == "mtllib"){
-			std::string materialFilename;
-			s >> materialFilename;
-
-			modelData.material =
-				LoadMaterialTemplateFile(directoryPath,materialFilename);
-		}
-	}
-	file.close();
-	return modelData;
-}
-
-#pragma endregion
-
-
 #pragma endregion
 
 int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
@@ -413,12 +282,12 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	spriteBall->Initialize(spriteCommon,"resource/monsterball.png");
 	spriteBall->SetPosition({200.0f,0.0f});
 
-	Obj3DCommon* object3dCommon = nullptr;
-	object3dCommon = new Obj3DCommon();
-	object3dCommon->Initialize();
+	Obj3dCommon* object3dCommon = nullptr;
+	object3dCommon = new Obj3dCommon();
+	object3dCommon->Initialize(dxCommon);
 
 	Obj3D* object3d = new Obj3D();
-	object3d->Initialize();
+	object3d->Initialize(object3dCommon);
 
 
 
@@ -431,16 +300,16 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 #pragma region VertexResourceを生成する
 
-	// 分割数（自由に調整可能）
-	const int kLatitudeDiv = 16;  // 縦（経度）
-	const int kLongitudeDiv = 16; // 横（緯度）
+	//// 分割数（自由に調整可能）
+	//const int kLatitudeDiv = 16;  // 縦（経度）
+	//const int kLongitudeDiv = 16; // 横（緯度）
 
-	int sphereVertexCount = kLatitudeDiv * kLongitudeDiv * 6;
+	//int sphereVertexCount = kLatitudeDiv * kLongitudeDiv * 6;
 
-	ModelData modelData = LoadObjFile("resource","plane.obj");
+	//ModelData modelData = LoadObjFile("resource","plane.obj");
 
 	// VertexResource を生成
-	Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource =
+	/*Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource =
 		dxCommon->CreateBufferResource(sizeof(Sprite::VertexData) *
 			modelData.vertices.size());
 
@@ -450,42 +319,29 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> indexResource =
 		dxCommon->CreateBufferResource(sizeof(uint32_t) *
-			modelData.vertices.size());
+			modelData.vertices.size());*/
 
-	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
-	indexBufferView.BufferLocation = indexResource->GetGPUVirtualAddress();
-	indexBufferView.SizeInBytes =
-		UINT(sizeof(uint32_t) * modelData.vertices.size());
-	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-
-#pragma endregion
-
-#pragma region MaterialResource
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> materialResource =
-		dxCommon->CreateBufferResource(sizeof(Sprite::Material));
-	Sprite::Material* materialData = nullptr;
-
-	materialResource->Map(0,nullptr,reinterpret_cast<void**>(&materialData));
-	*materialData = Sprite::Material{Vector4(1.0f, 1.0f, 1.0f, 1.0f), 1};
-	materialData->enableLighting = true;
-	materialData->uvTransform = MakeIdentity4x4();
+	//D3D12_INDEX_BUFFER_VIEW indexBufferView{};
+	//indexBufferView.BufferLocation = indexResource->GetGPUVirtualAddress();
+	//indexBufferView.SizeInBytes =
+	//	UINT(sizeof(uint32_t) * modelData.vertices.size());
+	//indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 
 #pragma endregion
 
-#pragma region directionalLight
+//#pragma region MaterialResource
+//
+//	Microsoft::WRL::ComPtr<ID3D12Resource> materialResource =
+//		dxCommon->CreateBufferResource(sizeof(Sprite::Material));
+//	Sprite::Material* materialData = nullptr;
+//
+//	materialResource->Map(0,nullptr,reinterpret_cast<void**>(&materialData));
+//	*materialData = Sprite::Material{Vector4(1.0f, 1.0f, 1.0f, 1.0f), 1};
+//	materialData->enableLighting = true;
+//	materialData->uvTransform = MakeIdentity4x4();
+//
+//#pragma endregion
 
-	Microsoft::WRL::ComPtr<ID3D12Resource> directionalLightResource =
-		dxCommon->CreateBufferResource(sizeof(DirectionalLight));
-	DirectionalLight* directionalLightData = nullptr;
-	directionalLightResource->Map(
-		0,nullptr,reinterpret_cast<void**>(&directionalLightData));
-
-	directionalLightData->color = {1.0f, 1.0f, 1.0f, 1.0f};
-	directionalLightData->direction = {0.0f, 0.0f, -1.0f};
-	directionalLightData->intensity = 1.0f;
-
-#pragma endregion
 
 #pragma region TransformationMatrix用のResourceを作る
 
@@ -497,18 +353,18 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 #pragma endregion
 
-#pragma region VertexBufferViewを生成する
-
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
-	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
-
-	vertexBufferView.SizeInBytes =
-		UINT(sizeof(Sprite::VertexData) * modelData.vertices.size());
-
-	vertexBufferView.StrideInBytes = sizeof(Sprite::VertexData);
-
-
-#pragma endregion
+//#pragma region VertexBufferViewを生成する
+//
+//	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+//	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
+//
+//	vertexBufferView.SizeInBytes =
+//		UINT(sizeof(Sprite::VertexData) * modelData.vertices.size());
+//
+//	vertexBufferView.StrideInBytes = sizeof(Sprite::VertexData);
+//
+//
+//#pragma endregion
 
 #pragma region Textureの読み込み
 
@@ -517,7 +373,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
 
 	// モデル用テクスチャの読み込み
-	TextureManager::GetInstance()->LoadTexture(modelData.material.textureFilePath);
+	//TextureManager::GetInstance()->LoadTexture(Obj3D::ModelData().material.textureFilePath);
 
 #pragma endregion
 
@@ -528,11 +384,11 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	// const float kLatEvery = PI / float(kSubdivision);
 	// const float epsilon = 1e-5f;
 
-	Sprite::VertexData* vertexData = nullptr;
-	vertexResource->Map(0,nullptr,reinterpret_cast<void**>(&vertexData));
+	//Sprite::VertexData* vertexData = nullptr;
+	//vertexResource->Map(0,nullptr,reinterpret_cast<void**>(&vertexData));
 
-	std::memcpy(vertexData,modelData.vertices.data(),
-		sizeof(Sprite::VertexData) * modelData.vertices.size());
+	//std::memcpy(vertexData,modelData.vertices.data(),
+	//	sizeof(Sprite::VertexData) * modelData.vertices.size());
 
 	// vertexResource->Unmap(0, nullptr);
 
@@ -581,10 +437,10 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	//  }
 	//}
 
-	uint32_t* indexData = nullptr;
-	indexResource->Map(0,nullptr,reinterpret_cast<void**>(&indexData));
-	std::memcpy(indexData,modelData.vertices.data(),
-		sizeof(uint32_t) * modelData.vertices.size());
+	//uint32_t* indexData = nullptr;
+	//indexResource->Map(0,nullptr,reinterpret_cast<void**>(&indexData));
+	//std::memcpy(indexData,modelData.vertices.data(),
+	//	sizeof(uint32_t) * modelData.vertices.size());
 
 #pragma endregion
 
@@ -595,16 +451,6 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 #pragma endregion
 
 #pragma region 変数宣言
-
-	Transform transform{
-{1.0f, 1.0f, 1.0f},
-{0.0f, 0.0f, 0.0f},
-{0.0f, 0.0f, 0.0f},
-
-	};
-
-	Transform cameraTransform{
-		{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -10.0f}};
 
 	Transform uvTransformSprite{
 		{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
@@ -637,6 +483,8 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			//   SoundPlayWave(xAudio2.Get(), soundData);
 			//   hasPlayed = true;
 			// }
+
+			object3d->Update();
 
 			sprite->Update();
 			spriteBall->Update();
@@ -756,6 +604,10 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			///================================
 
 			dxCommon->PreDraw();
+
+			object3dCommon->Draw();
+			object3d->Draw();
+
 
 			spriteCommon->Draw();
 

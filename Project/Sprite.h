@@ -1,28 +1,28 @@
 #pragma once
-#include"Math.h"
+#include "Math.h"
 #include <wrl.h>
 #include <d3d12.h>
-#include<string>
+#include <string>
 
+// 前方宣言
 class SpriteCommon;
-class Sprite{
-public:
 
+class Sprite{
+public: // --- 公開する定義・関数 ---
+
+	// 構造体定義（外部からも参照できるようにPublicのままにします）
 	struct VertexData{
 		Vector4 position;
 		Vector2 texcoord;
 		Vector3 normal;
 
+		// mapなどで使うための比較演算子
 		bool operator<(const VertexData& other) const{
-			if(position != other.position)
-				return position < other.position;
-			if(texcoord != other.texcoord)
-				return texcoord < other.texcoord;
-			if(normal != other.normal)
-				return normal < other.normal;
+			if(position != other.position) return position < other.position;
+			if(texcoord != other.texcoord) return texcoord < other.texcoord;
+			if(normal != other.normal) return normal < other.normal;
 			return false;
 		}
-
 	};
 
 	struct Material{
@@ -37,38 +37,19 @@ public:
 		Matrix4x4 World;
 	};
 
-	Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource;
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> indexResource;
-
-	VertexData* vertexData = nullptr;
-	uint32_t* indexData = nullptr;
-
-	D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
-	D3D12_INDEX_BUFFER_VIEW indexBufferView;
-
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> materialResource;
-	Material* materialData = nullptr;
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> transformationMatrixResource;
-	TransformationMatrix* transformationMatrixData = nullptr;
-
-	Matrix4x4 worldMatrix;
-	Matrix4x4 viewMatrix;
-	Matrix4x4 projectionMatrix;
-
+	// --- メイン関数 ---
 	void Initialize(SpriteCommon* spriteCommon,std::string textureFilePath);
 	void Update();
 	void Draw();
 
+	// --- ゲッター / セッター ---
 	const Vector2& GetPosition() const{ return position; }
 	void SetPosition(const Vector2& position){ this->position = position; }
 
 	float GetRotation() const{ return rotation; }
 	void SetRotation(float rotation){ this->rotation = rotation; }
 
-	const Vector4& GetColor()const{ return materialData->color; }
+	const Vector4& GetColor() const{ return materialData->color; }
 	void SetColor(const Vector4& color){ materialData->color = color; }
 
 	const Vector2& GetSize() const{ return size; }
@@ -84,15 +65,16 @@ public:
 	void SetFlipY(bool isFlipY){ isFlipY_ = isFlipY; }
 
 	bool GetTextureLeftTop(Vector2* leftTop) const{
-		if(!leftTop)return false;
+		if(!leftTop) return false;
 		*leftTop = textureLeftTop;
 		return true;
 	}
 	void SetTextureLeftTop(const Vector2& leftTop){
 		textureLeftTop = leftTop;
 	}
+
 	bool GetTextureSize(Vector2* size) const{
-		if(!size)return false;
+		if(!size) return false;
 		*size = textureSize;
 		return true;
 	}
@@ -100,27 +82,55 @@ public:
 		textureSize = size;
 	}
 
-	SpriteCommon* spriteCommon = nullptr;
+private: // --- 内部でのみ使用する関数・変数 ---
 
-private:
-
+	// 初期化用ヘルパー関数
 	void CreateVertexData();
 	void CreateMaterialData();
 	void CreateTransformationMatrixData();
+	void AdjustTextureSize();
 
-	Vector2 position = {0.0f,0.0f};
+	// 借りてくるポインタ
+	SpriteCommon* spriteCommon = nullptr;
+
+	// --- DirectXリソース (外部から触る必要がないのでPrivateへ) ---
+
+	// 頂点関連
+	Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource;
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+	VertexData* vertexData = nullptr;
+
+	// インデックス関連
+	Microsoft::WRL::ComPtr<ID3D12Resource> indexResource;
+	D3D12_INDEX_BUFFER_VIEW indexBufferView{};
+	uint32_t* indexData = nullptr;
+
+	// マテリアル関連
+	Microsoft::WRL::ComPtr<ID3D12Resource> materialResource;
+	Material* materialData = nullptr;
+
+	// 座標変換行列関連
+	Microsoft::WRL::ComPtr<ID3D12Resource> transformationMatrixResource;
+	TransformationMatrix* transformationMatrixData = nullptr;
+
+	// --- 内部パラメータ ---
+
+	// 行列計算用
+	Matrix4x4 worldMatrix;
+	Matrix4x4 viewMatrix;
+	Matrix4x4 projectionMatrix;
+
+	// トランスフォーム情報
+	Vector2 position = {0.0f, 0.0f};
 	float rotation = 0.0f;
-	Vector2 size = {640.0f,360.0f};
+	Vector2 size = {640.0f, 360.0f};
 
+	// テクスチャ・見た目情報
 	uint32_t textureIndex = 0;
-
-	Vector2 anchorPoint = {0.0f,0.0f};
+	Vector2 anchorPoint = {0.0f, 0.0f};
 	bool isFlipX_ = false;
 	bool isFlipY_ = false;
 
-	Vector2 textureLeftTop = {0.0f,0.0f};
-	Vector2 textureSize = {100.0f,100.0f};
-
-	void AdjustTextureSize();
+	Vector2 textureLeftTop = {0.0f, 0.0f};
+	Vector2 textureSize = {100.0f, 100.0f};
 };
-

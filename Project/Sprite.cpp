@@ -141,6 +141,10 @@ void Sprite::CreateVertexData(){
 		indexResource->GetGPUVirtualAddress();
 	indexBufferView.SizeInBytes = sizeof(uint32_t) * 6;
 	indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+
+	vertexResource->Map(0,nullptr,reinterpret_cast<void**>(&vertexData));
+	indexResource->Map(0,nullptr,reinterpret_cast<void**>(&indexData));
+
 }
 
 void Sprite::CreateMaterialData(){
