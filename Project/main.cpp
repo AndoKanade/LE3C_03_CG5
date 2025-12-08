@@ -20,6 +20,8 @@
 #include"SpriteCommon.h"
 #include "Sprite.h"
 #include"Math.h"
+#include"Obj3DCommon.h"
+#include"Obj3D.h"
 
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
@@ -411,6 +413,14 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	spriteBall->Initialize(spriteCommon,"resource/monsterball.png");
 	spriteBall->SetPosition({200.0f,0.0f});
 
+	Obj3DCommon* object3dCommon = nullptr;
+	object3dCommon = new Obj3DCommon();
+	object3dCommon->Initialize();
+
+	Obj3D* object3d = new Obj3D();
+	object3d->Initialize();
+
+
 
 	SoundData soundData = SoundLoadWave("resource/You_and_Me.wav");
 	bool hasPlayed = false;
@@ -793,6 +803,10 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 	TextureManager::GetInstance()->Finalize();
 
+	delete object3d;
+	object3d = nullptr;
+	delete object3dCommon;
+	object3dCommon = nullptr;
 	delete spriteBall;
 	spriteBall = nullptr;
 	delete sprite;
