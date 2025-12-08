@@ -63,4 +63,7 @@ public: // ▼ 外部（MainやSprite）から呼び出したい機能
 
     uint32_t GetTextureIndexbyFilePath(const std::string& filePath);
     D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandleGPU(uint32_t textureIndex);
+
+	const DirectX::TexMetadata& GetMetaData(uint32_t textureIndex);
+
 };

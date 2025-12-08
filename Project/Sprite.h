@@ -74,6 +74,32 @@ public:
 	const Vector2& GetSize() const{ return size; }
 	void SetSize(const Vector2& size){ this->size = size; }
 
+	const Vector2& GetAnchorPoint() const{ return anchorPoint; }
+	void SetAnchorPoint(const Vector2& anchorPoint){ this->anchorPoint = anchorPoint; }
+
+	bool IsFlipX() const{ return isFlipX_; }
+	void SetFlipX(bool isFlipX){ isFlipX_ = isFlipX; }
+
+	bool IsFlipY() const{ return isFlipY_; }
+	void SetFlipY(bool isFlipY){ isFlipY_ = isFlipY; }
+
+	bool GetTextureLeftTop(Vector2* leftTop) const{
+		if(!leftTop)return false;
+		*leftTop = textureLeftTop;
+		return true;
+	}
+	void SetTextureLeftTop(const Vector2& leftTop){
+		textureLeftTop = leftTop;
+	}
+	bool GetTextureSize(Vector2* size) const{
+		if(!size)return false;
+		*size = textureSize;
+		return true;
+	}
+	void SetTextureSize(const Vector2& size){
+		textureSize = size;
+	}
+
 	SpriteCommon* spriteCommon = nullptr;
 
 private:
@@ -87,5 +113,14 @@ private:
 	Vector2 size = {640.0f,360.0f};
 
 	uint32_t textureIndex = 0;
+
+	Vector2 anchorPoint = {0.0f,0.0f};
+	bool isFlipX_ = false;
+	bool isFlipY_ = false;
+
+	Vector2 textureLeftTop = {0.0f,0.0f};
+	Vector2 textureSize = {100.0f,100.0f};
+
+	void AdjustTextureSize();
 };
 

@@ -133,7 +133,7 @@ void SpriteCommon::CreatePipelineState(){
 
 #pragma region RasterrizerStateを生成する
 
-	resterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+	resterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
 	resterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 #pragma endregion
 

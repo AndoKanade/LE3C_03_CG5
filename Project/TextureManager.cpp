@@ -129,3 +129,15 @@ D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::GetSrvHandleGPU(uint32_t textureInde
 	// 3. 保持しているGPUハンドルを返す
 	return textureData.srvHandleGPU;
 }
+
+const DirectX::TexMetadata& TextureManager::GetMetaData(uint32_t textureIndex){
+	// 1. 範囲外指定違反チェック
+	// 指定された番号が、読み込み済みテクスチャの数を超えていないか確認
+	assert(textureIndex < textureDatas_.size());
+
+	// 2. テクスチャデータの参照を取得
+	TextureData& textureData = textureDatas_[textureIndex];
+
+	// 3. メタデータを返す
+	return textureData.metadata;
+}

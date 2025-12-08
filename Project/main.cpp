@@ -773,10 +773,10 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			//	UINT(modelData.vertices.size()),1,0,0);
 
 			sprite->Draw();
-			spriteBall->Draw();
+			//	spriteBall->Draw();
 
-			//	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
-	//				dxCommon->commandList.Get());
+				//	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
+		//				dxCommon->commandList.Get());
 			dxCommon->PostDraw();
 
 #pragma endregion
