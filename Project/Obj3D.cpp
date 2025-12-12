@@ -5,6 +5,7 @@
 #include "Sprite.h"
 #include "Math.h"
 #include <cassert>
+#include "ModelManager.h"
 
 void Obj3D::Initialize(Obj3dCommon* object3dCommon){
 	this->object3dCommon = object3dCommon;
@@ -58,6 +59,10 @@ void Obj3D::Draw(){
 	if(model){
 		model->Draw();
 	}
+}
+
+void Obj3D::SetModel(const std::string& filePath){
+	model = ModelManager::GetInstance()->FindModel(filePath);
 }
 
 void Obj3D::CreateTransformationMatrixData(){

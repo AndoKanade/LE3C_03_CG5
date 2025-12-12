@@ -108,6 +108,9 @@
     <ClCompile Include="ModelCommon.cpp">
       <Filter>ソース ファイル\3D</Filter>
     </ClCompile>
+    <ClCompile Include="ModelManager.cpp">
+      <Filter>ソース ファイル\3D</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="resource\shader\Object3d.hlsli">
@@ -182,6 +185,9 @@
       <Filter>ヘッダー ファイル\3D</Filter>
     </ClInclude>
     <ClInclude Include="ModelCommon.h">
+      <Filter>ヘッダー ファイル\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelManager.h">
       <Filter>ヘッダー ファイル\3D</Filter>
     </ClInclude>
   </ItemGroup>

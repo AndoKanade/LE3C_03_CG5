@@ -43,7 +43,7 @@ public: // --- 構造体定義 (データ構造) ---
 public: // --- メンバ関数 ---
 
 	// 初期化
-	void Initialize(ModelCommon* modelCommon);
+	void Initialize(ModelCommon* modelCommon,const std::string& directorypath,const std::string& filename);
 
 	// 描画
 	void Draw();
@@ -54,7 +54,7 @@ public: // --- メンバ関数 ---
 	static MaterialData LoadMaterialTemplateFile(const std::string& directoryPath,const std::string& filename);
 
 	// .objファイルの読み込み
-	static ModelData LoadObjFile(const std::string& directoryPath,const std::string& filename);
+	static ModelData LoadObjFile(const std::string&directoryPath,const std::string& filename);
 
 
 private: // --- メンバ変数 ---

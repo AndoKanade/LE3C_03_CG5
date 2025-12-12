@@ -39,6 +39,8 @@ public: // --- メンバ関数 ---
 
 	// モデルをセットする
 	void SetModel(Model* model){ this->model = model; }
+	void SetModel(const std::string& filePath);
+
 
 	// Transformの各要素を設定
 	void SetScale(const Vector3& scale){ transform.scale = scale; }

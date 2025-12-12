@@ -5,12 +5,12 @@
 #include <iostream>
 #include <cassert>
 
-void Model::Initialize(ModelCommon* modelCommon){
+void Model::Initialize(ModelCommon* modelCommon,const std::string& directorypath,const std::string& filename){
 	this->modelCommon_ = modelCommon;
 
 	// モデルデータの読み込み (.obj)
 	// TODO: 将来的には引数でファイル名を受け取るように変更する
-	modelData = LoadObjFile("resource","plane.obj");
+	modelData = LoadObjFile(directorypath,filename);
 
 	// テクスチャの読み込み (.mtlから取得したパスを使用)
 	TextureManager::GetInstance()->LoadTexture(modelData.material.textureFilePath);
