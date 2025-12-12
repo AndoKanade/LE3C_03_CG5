@@ -6,15 +6,14 @@
 #include "Math.h"
 #include <cassert>
 #include "ModelManager.h"
+#include"Camera.h"
 
 void Obj3D::Initialize(Obj3dCommon* object3dCommon){
 	this->object3dCommon = object3dCommon;
+	this->camera = object3dCommon->GetDefaultCamera();
 
 	// トランスフォームの初期化
 	transform = {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
-
-	// カメラの初期化
-	cameraTransform = {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -10.0f}};
 
 	// リソース（バッファ）の生成
 	CreateTransformationMatrixData();
@@ -25,22 +24,22 @@ void Obj3D::Update(){
 	// 1. ワールド行列の計算 (Scale -> Rotate -> Translate)
 	Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale,transform.rotate,transform.translate);
 
-	// 2. カメラ行列 (View行列) の計算
-	Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale,cameraTransform.rotate,cameraTransform.translate);
-	Matrix4x4 viewMatrix = Inverse(cameraMatrix);
 
-	// 3. プロジェクション行列の計算
-	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f,1280.0f / 720.0f,0.1f,100.0f);
+	Matrix4x4 worldViewProjectionMatrix;
+	Camera* camera = object3dCommon->GetDefaultCamera();
 
-	// 4. 定数バッファへの転送
-	if(transformationMatrixData){
-		// 行列を合成 (World * View * Projection)
-		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix,Multiply(viewMatrix,projectionMatrix));
 
-		// GPU上のバッファに書き込み
-		transformationMatrixData->WVP = worldViewProjectionMatrix;
-		transformationMatrixData->World = worldMatrix;
+	if(camera){
+		const Matrix4x4& viewProjectionMatrix = camera->GetViewProjectionMatrix();
+		worldViewProjectionMatrix = Multiply(worldMatrix,viewProjectionMatrix);
+	} else{
+		worldViewProjectionMatrix = worldMatrix;
 	}
+
+	// GPU上のバッファに書き込み
+	transformationMatrixData->WVP = worldViewProjectionMatrix;
+	transformationMatrixData->World = worldMatrix;
+
 }
 
 void Obj3D::Draw(){
