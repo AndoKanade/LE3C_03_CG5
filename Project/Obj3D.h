@@ -8,6 +8,7 @@
 // 前方宣言
 class Obj3dCommon;
 class Model;
+class Camera;
 
 class Obj3D{
 public:
@@ -41,6 +42,7 @@ public: // --- メンバ関数 ---
 	void SetModel(Model* model){ this->model = model; }
 	void SetModel(const std::string& filePath);
 
+	void SetCamera(Camera* camera){ this->camera = camera; }
 
 	// Transformの各要素を設定
 	void SetScale(const Vector3& scale){ transform.scale = scale; }
@@ -54,7 +56,6 @@ public: // --- メンバ関数 ---
 	const Vector3& GetRotate() const{ return transform.rotate; }
 	const Vector3& GetTranslate() const{ return transform.translate; }
 
-
 private: // --- メンバ変数 ---
 
 	// 共通リソースへのポインタ
@@ -62,6 +63,8 @@ private: // --- メンバ変数 ---
 
 	// 表示するモデルへのポインタ
 	Model* model = nullptr;
+
+	Camera* camera = nullptr;
 
 	// 座標変換行列用リソース
 	Microsoft::WRL::ComPtr<ID3D12Resource> transformationMatrixResource;
@@ -73,9 +76,6 @@ private: // --- メンバ変数 ---
 
 	// オブジェクトの変形情報
 	Transform transform;
-
-	// カメラの変形情報 (仮)
-	Transform cameraTransform;
 
 private: // --- プライベート関数 ---
 	void CreateTransformationMatrixData();

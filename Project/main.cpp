@@ -26,7 +26,9 @@
 #include "Obj3D.h"
 #include "ModelManager.h"
 #include "TextureManager.h"
-#include "Logger.h" // ★追加: Loggerクラスを使用
+#include "Logger.h"
+#include "Camera.h"
+#include "CameraManager.h"
 
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
@@ -34,8 +36,9 @@
 #include "externals/imgui/imgui_impl_win32.h"
 #include <iostream>
 #include <map>
+#include "SrvManager.h"
 
-// ライブラリのリンク設定
+// ライブラリリンク
 #pragma comment(lib, "Dbghelp.lib")
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "dxcompiler.lib")
@@ -44,7 +47,7 @@
 
 using namespace DirectX;
 
-// ImGui用
+// ImGui用プロシージャハンドラ
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lPalam);
 
 // ウィンドウプロシージャ
@@ -52,7 +55,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam){
 	if(ImGui_ImplWin32_WndProcHandler(hwnd,msg,wparam,lparam)){
 		return true;
 	}
-
 	switch(msg){
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -73,30 +75,15 @@ struct D3DResourceLeakChecker{
 	}
 };
 
-#pragma region サウンド関連構造体
-struct ChunkHeader{
-	char id[4];
-	int32_t size;
-};
+// ==========================================================================
+// サウンド関連 (構造体・関数)
+// ==========================================================================
+#pragma region サウンド処理
+struct ChunkHeader{ char id[4]; int32_t size; };
+struct RiffHeader{ ChunkHeader chunk; char type[4]; };
+struct FormatChunk{ ChunkHeader chunk; WAVEFORMATEX fmt; };
+struct SoundData{ WAVEFORMATEX wfex; BYTE* pBUffer; unsigned int bufferSize; };
 
-struct RiffHeader{
-	ChunkHeader chunk;
-	char type[4];
-};
-
-struct FormatChunk{
-	ChunkHeader chunk;
-	WAVEFORMATEX fmt;
-};
-
-struct SoundData{
-	WAVEFORMATEX wfex;
-	BYTE* pBUffer;
-	unsigned int bufferSize;
-};
-#pragma endregion
-
-#pragma region サウンド読み込み関数
 SoundData SoundLoadWave(const char* filename){
 	std::ifstream file;
 	file.open(filename,std::ios_base::binary);
@@ -104,65 +91,43 @@ SoundData SoundLoadWave(const char* filename){
 
 	RiffHeader riff;
 	file.read((char*)&riff,sizeof(riff));
-
-	if(strncmp(riff.chunk.id,"RIFF",4) != 0){
-		assert(0);
-	}
-
-	if(strncmp(riff.type,"WAVE",4) != 0){
-		assert(0);
-	}
+	if(strncmp(riff.chunk.id,"RIFF",4) != 0) assert(0);
+	if(strncmp(riff.type,"WAVE",4) != 0) assert(0);
 
 	FormatChunk format = {};
 	file.read((char*)&format,sizeof(ChunkHeader));
-
-	if(strncmp(format.chunk.id,"fmt ",4) != 0){
-		assert(0);
-	}
-
+	if(strncmp(format.chunk.id,"fmt ",4) != 0) assert(0);
 	assert(format.chunk.size <= sizeof(format.fmt));
 	file.read((char*)&format.fmt,format.chunk.size);
 
 	ChunkHeader data;
 	file.read((char*)&data,sizeof(data));
-
-	// JUNKチャンクがあれば飛ばす
 	if(strncmp(data.id,"JUNK",4) == 0){
 		file.seekg(data.size,std::ios_base::cur);
 		file.read((char*)&data,sizeof(data));
 	}
-
-	if(strncmp(data.id,"data",4) != 0){
-		assert(0);
-	}
+	if(strncmp(data.id,"data",4) != 0) assert(0);
 
 	char* pBuffer = new char[data.size];
 	file.read(pBuffer,data.size);
-
 	file.close();
 
 	SoundData soundData = {};
 	soundData.wfex = format.fmt;
 	soundData.pBUffer = reinterpret_cast<BYTE*>(pBuffer);
 	soundData.bufferSize = data.size;
-
 	return soundData;
 }
-#pragma endregion
 
-#pragma region サウンド解放関数
 void SoundUnload(SoundData* soundData){
 	delete[] soundData->pBUffer;
 	soundData->pBUffer = 0;
 	soundData->bufferSize = 0;
 	soundData->wfex = {};
 }
-#pragma endregion
 
-#pragma region サウンド再生関数
 void SoundPlayWave(IXAudio2* xAudio2,const SoundData& soundData){
 	HRESULT result;
-
 	IXAudio2SourceVoice* pSourceVoice = nullptr;
 	result = xAudio2->CreateSourceVoice(&pSourceVoice,&soundData.wfex);
 	assert(SUCCEEDED(result));
@@ -171,13 +136,10 @@ void SoundPlayWave(IXAudio2* xAudio2,const SoundData& soundData){
 	buf.pAudioData = soundData.pBUffer;
 	buf.AudioBytes = soundData.bufferSize;
 	buf.Flags = XAUDIO2_END_OF_STREAM;
-
-	result = pSourceVoice->SubmitSourceBuffer(&buf);
-	result = pSourceVoice->Start();
+	pSourceVoice->SubmitSourceBuffer(&buf);
+	pSourceVoice->Start();
 }
 #pragma endregion
-
-// ★ Log関数は Logger.h にあるので削除しました
 
 #pragma region ダンプ出力
 static LONG WINAPI ExportDump(EXCEPTION_POINTERS* exception){
@@ -186,72 +148,82 @@ static LONG WINAPI ExportDump(EXCEPTION_POINTERS* exception){
 	wchar_t filePath[MAX_PATH] = {0};
 	CreateDirectory(L"./Dumps",nullptr);
 	StringCchPrintfW(filePath,MAX_PATH,L"./Dumps/%04d-%02d%02d-%02d%02d.dmp",
-		time.wYear,time.wMonth,time.wDay,time.wHour,
-		time.wMinute);
-	HANDLE dumpFileHandle =
-		CreateFile(filePath,GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_WRITE | FILE_SHARE_READ,0,CREATE_ALWAYS,0,0);
-
-	DWORD processId = GetCurrentProcessId();
-	DWORD threadId = GetCurrentThreadId();
+		time.wYear,time.wMonth,time.wDay,time.wHour,time.wMinute);
+	HANDLE dumpFileHandle = CreateFile(filePath,GENERIC_READ | GENERIC_WRITE,
+		FILE_SHARE_WRITE | FILE_SHARE_READ,0,CREATE_ALWAYS,0,0);
 
 	MINIDUMP_EXCEPTION_INFORMATION minidumpinformation{0};
-	minidumpinformation.ThreadId = threadId;
+	minidumpinformation.ThreadId = GetCurrentThreadId();
 	minidumpinformation.ExceptionPointers = exception;
 	minidumpinformation.ClientPointers = TRUE;
 
-	MiniDumpWriteDump(GetCurrentProcess(),processId,dumpFileHandle,
+	MiniDumpWriteDump(GetCurrentProcess(),GetCurrentProcessId(),dumpFileHandle,
 		MiniDumpNormal,&minidumpinformation,nullptr,nullptr);
-
 	return EXCEPTION_EXECUTE_HANDLER;
 }
 #pragma endregion
 
 
-// ===================================================================================
+// ==========================================================================
 // メイン関数
-// ===================================================================================
+// ==========================================================================
 int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	D3DResourceLeakChecker leakCheck;
-
-	// 例外発生時のダンプ出力設定
 	SetUnhandledExceptionFilter(ExportDump);
 
-	// 1. ウィンドウ初期化
+	// ---------------------------------------------------------------
+	// 1. システム・基盤部分の初期化
+	// ---------------------------------------------------------------
 	WinAPI* winApi = new WinAPI();
 	winApi->Initialize();
 
-	// 2. DirectX初期化
 	DXCommon* dxCommon = new DXCommon();
 	dxCommon->Initialize(winApi);
 
-	// 3. 入力初期化
 	Input* input = new Input();
 	input->Initialize(winApi);
 
-	// 4. オーディオ初期化 (XAudio2)
+	SrvManager* srvManager = SrvManager::GetInstance();
+	srvManager->Initialize(dxCommon);
+
+	// オーディオ (XAudio2)
 	Microsoft::WRL::ComPtr<IXAudio2> xAudio2;
 	IXAudio2MasteringVoice* masterVoice = nullptr;
 	HRESULT result = XAudio2Create(&xAudio2,0,XAUDIO2_DEFAULT_PROCESSOR);
 	result = xAudio2->CreateMasteringVoice(&masterVoice);
 	assert(SUCCEEDED(result));
 
-	// 音声データの読み込み
+	// 音声データのロード
 	SoundData soundData = SoundLoadWave("resource/You_and_Me.wav");
 
+	// ---------------------------------------------------------------
+	// 2. リソースマネージャ・共通部分の初期化
+	// ---------------------------------------------------------------
 
-	// 5. テクスチャマネージャ初期化
-	TextureManager::GetInstance()->Initialize(dxCommon);
-	// 必要なテクスチャをロード
+	// テクスチャ
+	TextureManager::GetInstance()->Initialize(dxCommon,srvManager);
 	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
 	TextureManager::GetInstance()->LoadTexture("resource/monsterball.png");
 
-
-	// 6. スプライト共通部 初期化
+	// スプライト共通
 	SpriteCommon* spriteCommon = new SpriteCommon();
 	spriteCommon->Initialize(dxCommon);
 
-	// スプライト生成
+	// 3Dオブジェクト共通
+	Obj3dCommon* object3dCommon = new Obj3dCommon();
+	object3dCommon->Initialize(dxCommon);
+
+	// モデルマネージャ
+	ModelManager::GetInstance()->Initialize(dxCommon);
+	ModelManager::GetInstance()->LoadModel("plane.obj"); // plane読み込み
+	ModelManager::GetInstance()->LoadModel("fence.obj"); // fence読み込み
+
+
+	// ---------------------------------------------------------------
+	// 3. ゲームオブジェクトの生成
+	// ---------------------------------------------------------------
+
+	// スプライト
 	Sprite* sprite = new Sprite();
 	sprite->Initialize(spriteCommon,"resource/uvChecker.png");
 
@@ -259,83 +231,103 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	spriteBall->Initialize(spriteCommon,"resource/monsterball.png");
 	spriteBall->SetPosition({200.0f, 0.0f});
 
-
-	// ==============================================================================
-	// 7. 3Dモデル関連の初期化
-	// ==============================================================================
-
-	// (A) 3Dオブジェクト共通部
-	Obj3dCommon* object3dCommon = new Obj3dCommon();
-	object3dCommon->Initialize(dxCommon);
-
-	// (B) モデルマネージャ初期化
-	ModelManager::GetInstance()->Initialize(dxCommon);
-
-	// (C) モデルデータの読み込み
-	ModelManager::GetInstance()->LoadModel("plane.obj");
-	ModelManager::GetInstance()->LoadModel("fence.obj");
-
-
-	// ==============================================================================
-	// 8. 3Dオブジェクト(インスタンス)の生成
-	// ==============================================================================
-
-	// 1つ目のオブジェクト (plane)
+	// 3Dオブジェクト 1 (plane)
 	Obj3D* object3d = new Obj3D();
 	object3d->Initialize(object3dCommon);
 	object3d->SetModel("plane.obj");
 	object3d->SetTranslate({0.0f, 0.0f, 0.0f});
 	object3d->SetScale({1.0f, 1.0f, 1.0f});
 
-	// 2つ目のオブジェクト (axis)
+	// 3Dオブジェクト 2 (fence)
 	Obj3D* object3d_2 = new Obj3D();
 	object3d_2->Initialize(object3dCommon);
-	// ★ axis.obj をセット！
 	object3d_2->SetModel("fence.obj");
 	object3d_2->SetTranslate({2.0f, 0.0f, 0.0f});
 	object3d_2->SetScale({1.0f, 1.0f, 1.0f});
+
+
+	// ---------------------------------------------------------------
+	// 4. カメラの初期化
+	// ---------------------------------------------------------------
+	CameraManager::GetInstance()->Initialize();
+
+	// デフォルトカメラ作成
+	CameraManager::GetInstance()->CreateCamera("default");
+	auto* defaultCamera = CameraManager::GetInstance()->GetCamera("default");
+	defaultCamera->SetRotate({0.0f, 0.0f, 0.0f});
+	defaultCamera->SetTranslate({0.0f, 0.0f, -10.0f});
+
+	// アクティブ設定
+	CameraManager::GetInstance()->SetActiveCamera("default");
+
+	// 共通部にセット
+	object3dCommon->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
 
 
 	// ==============================================================================
 	// ゲームループ
 	// ==============================================================================
 	while(true){
-		// メッセージ処理 (×ボタンで終了)
 		if(winApi->ProcessMessage()){
 			break;
 		} else{
-			// --- 更新処理 ---
+			// -----------------------------------------
+			// 更新処理
+			// -----------------------------------------
 			input->Update();
 
-			// 3Dオブジェクト更新
+			// --- カメラ移動処理 (WASD) ---
+			// マネージャから現在のアクティブカメラを取得して操作する
+			Camera* activeCamera = CameraManager::GetInstance()->GetActiveCamera();
+			if(activeCamera){
+				const float kCameraSpeed = 0.1f;
+				Vector3 translate = activeCamera->GetTranslate();
+
+				if(input->PushKey(DIK_W)){ translate.z += kCameraSpeed; } // 奥へ
+				if(input->PushKey(DIK_S)){ translate.z -= kCameraSpeed; } // 手前へ
+				if(input->PushKey(DIK_A)){ translate.x -= kCameraSpeed; } // 左へ
+				if(input->PushKey(DIK_D)){ translate.x += kCameraSpeed; } // 右へ
+
+				activeCamera->SetTranslate(translate);
+			}
+
+			// マネージャ更新 (カメラ行列の計算など)
+			CameraManager::GetInstance()->Update();
+
+			// 念のため毎フレームセット (カメラ切替に対応するため)
+			object3dCommon->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
+
+
+			// オブジェクト更新
 			object3d->Update();
 			object3d_2->Update();
-
-			// スプライト更新
 			sprite->Update();
 			spriteBall->Update();
 
-			// スペースキーでログ出力テスト
+			// テスト機能
 			if(input->TriggerKey(DIK_SPACE)){
-				Logger::Log("Trigger space\n"); // ★ Logger::Logを使用
+				Logger::Log("Trigger space\n");
 				// SoundPlayWave(xAudio2.Get(), soundData);
 			}
 
 
-			// --- 描画処理 ---
-			dxCommon->PreDraw(); // 描画開始
+			// -----------------------------------------
+			// 描画処理
+			// -----------------------------------------
+			dxCommon->PreDraw();
+			srvManager->PreDraw();
 
-			// 1. 3D描画
+			// 3D描画
 			object3dCommon->Draw(); // 共通設定
-			object3d->Draw();       // plane描画
-			object3d_2->Draw();     // axis描画
+			object3d->Draw();       // plane
+			object3d_2->Draw();     // fence
 
-			// 2. スプライト描画
+			// 2D描画
 			spriteCommon->Draw();   // 共通設定
 			sprite->Draw();
 			// spriteBall->Draw();
 
-			dxCommon->PostDraw(); // 描画終了
+			dxCommon->PostDraw();
 		}
 	}
 
@@ -346,27 +338,27 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	// 終了処理 (解放)
 	// ==============================================================================
 
-	// テクスチャマネージャ解放
+	// マネージャ解放
+	SrvManager::GetInstance()->Finalize();
 	TextureManager::GetInstance()->Finalize();
-
-	// モデルマネージャ解放
 	ModelManager::GetInstance()->Finalize();
+	CameraManager::GetInstance()->Finalize();
 
-	// 3Dオブジェクト解放
+
+	// オブジェクト解放
 	delete object3d;
 	delete object3d_2;
 	delete object3dCommon;
 
-	// スプライト解放
 	delete spriteBall;
 	delete sprite;
 	delete spriteCommon;
 
-	// システム解放
+	// 基盤解放
 	delete dxCommon;
 	delete input;
 
-	// オーディオ解放
+	// サウンド解放
 	xAudio2.Reset();
 	SoundUnload(&soundData);
 

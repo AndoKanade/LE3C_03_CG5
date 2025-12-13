@@ -19,8 +19,6 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd,
 	WPARAM wParam,
 	LPARAM lPalam);
 
-const uint32_t DXCommon::kMaxSRVCount = 512;
-
 using namespace Microsoft::WRL;
 using namespace Logger;
 using namespace StringUtility;
@@ -40,7 +38,7 @@ void DXCommon::Initialize(WinAPI* winApi){
 	InitViewportRect();
 	InitScissorRect();
 	CreateDXCCompiler();
-	InitImGui();
+//	InitImGui();
 }
 
 void DXCommon::InitDevice(){
@@ -219,9 +217,6 @@ void DXCommon::CreateDepthBuffer(){
 
 void DXCommon::CreateDescriptorHeaps(){
 
-	descriptorSizeSRV = device->GetDescriptorHandleIncrementSize(
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 	descriptorSizeRTV =
 		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	descriptorSizeDSV =
@@ -229,9 +224,6 @@ void DXCommon::CreateDescriptorHeaps(){
 
 	rtvDescriptorHeap =
 		CreateDiscriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV,2,false);
-
-	srvDescriptorHeap =
-		CreateDiscriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,kMaxSRVCount,true);
 
 	dsvDescriptorHeap =
 		CreateDiscriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV,1,false);
@@ -316,16 +308,16 @@ void DXCommon::CreateDXCCompiler(){
 	assert(SUCCEEDED(hr));
 }
 
-void DXCommon::InitImGui(){
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui::StyleColorsDark();
-	ImGui_ImplWin32_Init(winApi_->GetHwnd());
-	ImGui_ImplDX12_Init(device.Get(),swapChainDesc.BufferCount,rtvDesc.Format,
-		srvDescriptorHeap.Get(),
-		srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-}
+//void DXCommon::InitImGui(){
+//	IMGUI_CHECKVERSION();
+//	ImGui::CreateContext();
+//	ImGui::StyleColorsDark();
+//	ImGui_ImplWin32_Init(winApi_->GetHwnd());
+//	ImGui_ImplDX12_Init(device.Get(),swapChainDesc.BufferCount,rtvDesc.Format,
+//		srvDescriptorHeap.Get(),
+//		srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+//		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+//}
 
 ComPtr<ID3D12DescriptorHeap>
 DXCommon::CreateDiscriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType,
@@ -343,16 +335,6 @@ DXCommon::CreateDiscriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType,
 	assert(SUCCEEDED(hr));
 
 	return descriptorHeap;
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE
-DXCommon::GetSRVCPUDescriptorHandle(uint32_t index){
-	return GetCPUDescriptorHandle(srvDescriptorHeap,descriptorSizeSRV,index);
-}
-
-D3D12_GPU_DESCRIPTOR_HANDLE
-DXCommon::GetSRVGPUDescriptorHandle(uint32_t index){
-	return GetGPUDscriptorHandle(srvDescriptorHeap,descriptorSizeSRV,index);
 }
 
 Microsoft::WRL::ComPtr<IDxcBlob>
@@ -529,10 +511,6 @@ void DXCommon::PreDraw(){
 
 	commandList.Get()->ClearDepthStencilView(dsvHandle,D3D12_CLEAR_FLAG_DEPTH,
 		1.0f,0,0,nullptr);
-
-	const Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeaps[] = {
-		srvDescriptorHeap};
-	commandList.Get()->SetDescriptorHeaps(1,descriptorHeaps->GetAddressOf());
 
 	commandList.Get()->RSSetViewports(1,&viewport);
 	commandList.Get()->RSSetScissorRects(1,&scissorRect);

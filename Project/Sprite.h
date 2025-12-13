@@ -93,6 +93,9 @@ private: // --- 内部でのみ使用する関数・変数 ---
 	// 借りてくるポインタ
 	SpriteCommon* spriteCommon = nullptr;
 
+	uint32_t textureIndex = 0;
+	std::string textureFilePath_;
+
 	// --- DirectXリソース (外部から触る必要がないのでPrivateへ) ---
 
 	// 頂点関連
@@ -126,7 +129,6 @@ private: // --- 内部でのみ使用する関数・変数 ---
 	Vector2 size = {640.0f, 360.0f};
 
 	// テクスチャ・見た目情報
-	uint32_t textureIndex = 0;
 	Vector2 anchorPoint = {0.0f, 0.0f};
 	bool isFlipX_ = false;
 	bool isFlipY_ = false;
