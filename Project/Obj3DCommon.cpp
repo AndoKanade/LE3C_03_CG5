@@ -59,6 +59,40 @@ void Obj3dCommon::CreateRootSignature(){
 	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	rootParameters[3].Descriptor.ShaderRegister = 2;
 
+	D3D12_DESCRIPTOR_RANGE descriptorRangeForInstancing[1] = {};
+
+	descriptorRangeForInstancing[0].BaseShaderRegister = 0;
+	descriptorRangeForInstancing[0].NumDescriptors = 1;
+	descriptorRangeForInstancing[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRangeForInstancing[0].OffsetInDescriptorsFromTableStart =
+		D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	D3D12_ROOT_PARAMETER rootParametersInstancing[4] = {};
+
+	rootParametersInstancing[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParametersInstancing[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParametersInstancing[0].Descriptor.ShaderRegister = 0;
+
+	rootParametersInstancing[1].ParameterType =
+		D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParametersInstancing[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	rootParametersInstancing[1].DescriptorTable.pDescriptorRanges =
+		descriptorRangeForInstancing;
+	rootParametersInstancing[1].DescriptorTable.NumDescriptorRanges =
+		_countof(descriptorRangeForInstancing);
+
+	rootParametersInstancing[2].ParameterType =
+		D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParametersInstancing[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParametersInstancing[2].DescriptorTable.pDescriptorRanges =
+		descriptorRange;
+	rootParametersInstancing[2].DescriptorTable.NumDescriptorRanges =
+		_countof(descriptorRangeForInstancing);
+
+	rootParametersInstancing[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParametersInstancing[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	rootParametersInstancing[3].Descriptor.ShaderRegister = 2;
+
 
 	// 2. サンプラーの設定
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
