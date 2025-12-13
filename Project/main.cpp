@@ -36,6 +36,7 @@
 #include "externals/imgui/imgui_impl_win32.h"
 #include <iostream>
 #include <map>
+#include "SrvManager.h"
 
 // ライブラリリンク
 #pragma comment(lib, "Dbghelp.lib")
@@ -182,6 +183,9 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	Input* input = new Input();
 	input->Initialize(winApi);
 
+	SrvManager* srvManager = SrvManager::GetInstance();
+	srvManager->Initialize(dxCommon);
+
 	// オーディオ (XAudio2)
 	Microsoft::WRL::ComPtr<IXAudio2> xAudio2;
 	IXAudio2MasteringVoice* masterVoice = nullptr;
@@ -197,7 +201,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	// ---------------------------------------------------------------
 
 	// テクスチャ
-	TextureManager::GetInstance()->Initialize(dxCommon);
+	TextureManager::GetInstance()->Initialize(dxCommon,srvManager);
 	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
 	TextureManager::GetInstance()->LoadTexture("resource/monsterball.png");
 
@@ -311,6 +315,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			// 描画処理
 			// -----------------------------------------
 			dxCommon->PreDraw();
+			srvManager->PreDraw();
 
 			// 3D描画
 			object3dCommon->Draw(); // 共通設定
@@ -334,9 +339,11 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	// ==============================================================================
 
 	// マネージャ解放
+	SrvManager::GetInstance()->Finalize();
 	TextureManager::GetInstance()->Finalize();
 	ModelManager::GetInstance()->Finalize();
 	CameraManager::GetInstance()->Finalize();
+
 
 	// オブジェクト解放
 	delete object3d;

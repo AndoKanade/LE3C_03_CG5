@@ -27,11 +27,9 @@ public:
 	Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource = nullptr;
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle;
 
-	uint32_t descriptorSizeSRV = 0;
 	uint32_t descriptorSizeRTV = 0;
 	uint32_t descriptorSizeDSV = 0;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvDescriptorHeap = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = nullptr;
 
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
@@ -50,8 +48,6 @@ public:
 	D3D12_RESOURCE_BARRIER barrier{};
 	uint64_t fenceValue = 0;
 	HANDLE fenceEvent = nullptr;
-
-	static const uint32_t kMaxSRVCount;
 
 #pragma endregion
 
@@ -81,9 +77,6 @@ public:
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>
 		CreateDiscriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType,UINT numDescriptors,
 			bool shaderVisible);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE GetSRVCPUDescriptorHandle(uint32_t index);
-	D3D12_GPU_DESCRIPTOR_HANDLE GetSRVGPUDescriptorHandle(uint32_t index);
 
 	Microsoft::WRL::ComPtr<IDxcBlob> CompileShader(const std::wstring& filePath,
 		const wchar_t* profile);

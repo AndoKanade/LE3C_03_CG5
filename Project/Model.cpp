@@ -1,5 +1,6 @@
 #include "Model.h"
 #include "TextureManager.h"
+#include "SrvManager.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -17,7 +18,7 @@ void Model::Initialize(ModelCommon* modelCommon,const std::string& directorypath
 
 	// テクスチャ番号(Index)を取得して保存
 	modelData.material.textureIndex =
-		TextureManager::GetInstance()->GetTextureIndexbyFilePath(modelData.material.textureFilePath);
+		TextureManager::GetInstance()->GetSrvIndex(modelData.material.textureFilePath);
 
 	// バッファの生成 (頂点・マテリアル)
 	CreateVertexData();
@@ -37,7 +38,7 @@ void Model::Draw(){
 
 	// 3. テクスチャSRVをセット (RootParameter[2])
 	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandle =
-		TextureManager::GetInstance()->GetSrvHandleGPU(modelData.material.textureIndex);
+		SrvManager::GetInstance()->GetGPUDescriptorHandle(modelData.material.textureIndex);
 	commandList->SetGraphicsRootDescriptorTable(2,textureSrvHandle);
 
 	// 4. 描画コマンド発行
