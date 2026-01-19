@@ -19,6 +19,7 @@
 #include<random>
 #include <xaudio2.h>
 #include<numbers>
+#include<list>
 
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
@@ -105,6 +106,12 @@ Vector3& operator+=(Vector3& lhv,const Vector3& rhv){
 	return lhv;
 }
 
+// Vector3 同士の足し算を行う演算子オーバーロード
+Vector3 operator+(const Vector3& v1,const Vector3& v2){
+	return Vector3(v1.x + v2.x,v1.y + v2.y,v1.z + v2.z);
+}
+
+
 inline bool operator!=(const Vector3& a,const Vector3& b){
 	return a.x != b.x || a.y != b.y || a.z != b.z;
 }
@@ -153,6 +160,13 @@ struct ParticleForGPU{
 	Matrix4x4 world;
 	Vector4 color;
 };;
+
+struct Emitter{
+	Transform transform;
+	uint32_t count;
+	float frequency;
+	float frequencyTime;
+};
 
 typedef struct TransformationMatrix{
 	Matrix4x4 WVP;
@@ -809,7 +823,7 @@ ModelData LoadObjFile(const std::string& directoryPath,
 
 #pragma endregion
 
-Particle MakeNewParticle(std::mt19937& randomEngine){
+Particle MakeNewParticle(std::mt19937& randomEngine,const Vector3& translate){
 	std::uniform_real_distribution<float>distribution(-1.0f,1.0f);
 	std::uniform_real_distribution<float>distColor(0.0f,1.0f);
 	std::uniform_real_distribution<float>distTime(1.0f,3.0f);
@@ -817,7 +831,9 @@ Particle MakeNewParticle(std::mt19937& randomEngine){
 	Particle particle{};
 	particle.transform.scale = {1.0f,1.0f,1.0f};
 	particle.transform.rotate = {0.0f,0.0f,0.0f};
-	particle.transform.translate = {distribution(randomEngine),distribution(randomEngine),distribution(randomEngine)};
+	Vector3 randomTranslate{distribution(randomEngine),distribution(randomEngine),distribution(randomEngine)};
+	particle.transform.translate = translate + randomTranslate;
+
 	particle.velocity = {distribution(randomEngine),
 		distribution(randomEngine),distribution(randomEngine)};
 	particle.color = {distColor(randomEngine),distColor(randomEngine),distColor(randomEngine),1.0f};
@@ -825,6 +841,14 @@ Particle MakeNewParticle(std::mt19937& randomEngine){
 	particle.lifeTime = distTime(randomEngine);
 	particle.currentTime = 0.0f;
 	return particle;
+}
+
+std::list<Particle> Emit(const Emitter& emitter,std::mt19937& randomEngine){
+	std::list<Particle>particles;
+	for(uint32_t count = 0;count < emitter.count;++count){
+		particles.push_back(MakeNewParticle(randomEngine,emitter.transform.translate));
+	}
+	return particles;
 }
 
 #pragma endregion
@@ -1602,7 +1626,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 #pragma endregion
 	// 1. 定数の名前を変更（最大数を表す名前に）
-	const uint32_t kNumMaxInstance = 10;
+	const uint32_t kNumMaxInstance = 100;
 
 	// リソース作成は最大数（kNumMaxInstance）分だけ確保する
 	Microsoft::WRL::ComPtr<ID3D12Resource> instanceResource =
@@ -1971,54 +1995,72 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 	// Transform transforms[kNumInstance]; // ← これを削除して下に変える
 
+	Emitter emitter{};
+	emitter.count = 3;
+	emitter.frequency = 0.5f;
+	emitter.frequencyTime = 0.0f;
+	emitter.transform.translate = {0.0f, 0.0f, 0.0f};
+	emitter.transform.rotate = {0.0f, 0.0f, 0.0f};
+	emitter.transform.scale = {1.0f, 1.0f, 1.0f};
+
 	const float kDeltaTime = 1.0f / 60.0f;
 
+	std::list<Particle> particles;
 
-	// 2. 描画すべきインスタンス数をカウントする変数を初期化
-	uint32_t numInstance = 0;
-
-	Particle particles[kNumMaxInstance];      // ← Particleの配列にする
-
-
+	// 乱数生成器（元のまま）
 	std::random_device seedGenerator;
 	std::mt19937 randomEngine(seedGenerator());
-
 	std::uniform_real_distribution<float> distribution(-1.0f,1.0f);
 
-	for(uint32_t index = 0; index < kNumMaxInstance; ++index){
-		particles[index] = MakeNewParticle(randomEngine);
+
+	for(uint32_t i = 0; i < 10; ++i){
+		particles.push_back(MakeNewParticle(randomEngine,emitter.transform.translate));
 	}
 
-	// 全てのパーティクル（最大数）をチェック
-	for(uint32_t index = 0; index < kNumMaxInstance; ++index){
 
-		// 生存時間を過ぎていたら更新せず、描画対象にしない（continueでスキップ）
-		if(particles[index].lifeTime <= particles[index].currentTime){
+	// --- 描画ループ内の処理 ---
+
+	// 描画用のカウンタをリセット
+	uint32_t numInstance = 0;
+
+	// ■ 変更点3：イテレータを使ったループに変更
+	for(std::list<Particle>::iterator particleIterator = particles.begin();
+		particleIterator != particles.end(); ){
+
+		if(particleIterator->lifeTime <= particleIterator->currentTime){
+			particleIterator = particles.erase(particleIterator);
 			continue;
 		}
 
 		// --- 以下、生きているパーティクルの処理 ---
 
-		// 座標更新や時間の加算 (画像内の処理)
-		// ※ kDeltaTime や transform, velocity はご自身の環境に合わせて定義してください
-		particles[index].transform.translate += particles[index].velocity * kDeltaTime;
-		particles[index].currentTime += kDeltaTime;
+		// ■ 変更点5：アクセス方法を「.」から「->」に変える
+		// 座標更新や時間の加算
+		particleIterator->transform.translate += particleIterator->velocity * kDeltaTime;
+		particleIterator->currentTime += kDeltaTime;
 
-		// 行列の計算 (WorldMatrixやWVPの計算ロジックはここに記述)
+		// 行列の計算 (WorldMatrixやWVPの計算ロジック)
+		// ここで計算するときも particleIterator->transform を使う
 		// Matrix4x4 worldMatrix = ...;
 		// Matrix4x4 worldViewProjectionMatrix = ...;
 
+
 		// 3. GPUに転送するデータに書き込む
-		// 【重要】ここで index ではなく numInstance を使うことで、隙間なくデータを詰める
-		instancingData[numInstance].WVP = MakeIdentity4x4();
-		instancingData[numInstance].world = MakeIdentity4x4();
-		instancingData[numInstance].color = particles[index].color;
+		// GPUバッファの最大数を超えないようにチェック（安全策）
+		if(numInstance < kNumMaxInstance){
+			// 書き込み先は numInstance (0, 1, 2...) を使い、
+			// データの元ネタは particleIterator (リストの中身) を使う
+			instancingData[numInstance].WVP = MakeIdentity4x4();   // 計算したWVPを入れる
+			instancingData[numInstance].world = MakeIdentity4x4(); // 計算したWorldを入れる
+			instancingData[numInstance].color = particleIterator->color;
 
-		// 生きているParticleの数を1つカウントする
-		++numInstance;
+			// 生きているParticleの描画数を1つカウントする
+			++numInstance;
+		}
+
+		// 次の要素へ進める（eraseしなかった場合のみインクリメント）
+		++particleIterator;
 	}
-
-
 
 #pragma region ImGuiの初期化
 
@@ -2050,7 +2092,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			// ゲームの処理
 
 			if(!hasPlayed){
-				SoundPlayWave(xAudio2.Get(),soundData);
+				//		SoundPlayWave(xAudio2.Get(),soundData);
 				hasPlayed = true;
 			}
 
@@ -2123,6 +2165,12 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 				ImGui::SliderAngle("UVRotate",&uvTransformSprite.rotate.z);
 			}
 
+			if(ImGui::Button("Add Particle")){
+				particles.splice(particles.end(),Emit(emitter,randomEngine));
+
+			}
+			ImGui::DragFloat3("EmitterTranslate",&emitter.transform.translate.x,0.01f,-100.0f,100.0f);
+
 			ImGui::End();
 			ImGui::Render();
 
@@ -2175,46 +2223,60 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			//    transform.rotate.y += 0.01f;
 			//*wvpData = {worldViewProjectionMatrix, worldMatrix};
 
+			emitter.frequencyTime += kDeltaTime;
+			if(emitter.frequency <= emitter.frequencyTime){
+				particles.splice(
+					particles.end(),Emit(emitter,randomEngine));
+				emitter.frequencyTime -= emitter.frequency;
+			}
+
 
 			// ループの外で、今回描画する数をカウントする変数をリセット
 			uint32_t numInstance = 0;
 
+			// リストの先頭から末尾までイテレータで回す
+			for(auto it = particles.begin(); it != particles.end(); ){
 
-			for(uint32_t index = 0; index < kNumMaxInstance; ++index){
-
-				// 【追加】生存時間を過ぎていたら、更新も描画登録もしない
-				if(particles[index].lifeTime <= particles[index].currentTime){
-					continue;
+				// 【変更】生存時間を過ぎていたら「リストから削除」する
+				if(it->lifeTime <= it->currentTime){
+					it = particles.erase(it); // 削除し、イテレータを次の要素に進める
+					continue; // 以下の処理はせず、ループの先頭に戻る
 				}
-				float alpha = 1.0f -
-					(particles[index].currentTime / particles[index].lifeTime); // 透明度計算
 
 				// --- 生きている場合の処理 ---
 
+				// アクセスを particles[index]. から it-> に変更
+				float alpha = 1.0f - (it->currentTime / it->lifeTime); // 透明度計算
+
 				// 1. 時間と座標の更新
-				particles[index].transform.translate += particles[index].velocity * kDeltaTime;
-				particles[index].currentTime += kDeltaTime; // 【重要】経過時間を足すのを忘れないように！
+				it->transform.translate += it->velocity * kDeltaTime;
+				it->currentTime += kDeltaTime;
 
 				// 2. 行列計算
 				Matrix4x4 worldMatrix =
-					MakeAffineMatrix(particles[index].transform.scale,particles[index].transform.rotate,
-						particles[index].transform.translate);
+					MakeAffineMatrix(it->transform.scale,it->transform.rotate,it->transform.translate);
 
 				Matrix4x4 worldViewProjectionMatrix =
 					Multiply(worldMatrix,Multiply(viewMatrix,projectionMatrix));
 
 				// 3. データの書き込み（パッキング）
-				// 【重要】index ではなく、カウントした numInstance の場所に書き込む
-				instancingData[numInstance].WVP = worldViewProjectionMatrix;
-				instancingData[numInstance].world = worldMatrix;
-				instancingData[numInstance].color = particles[index].color;
-				instancingData[numInstance].color.w = alpha;
+				// GPUバッファの上限（kNumMaxInstance）を超えないように安全策を入れる
+				if(numInstance < kNumMaxInstance){
 
-				// 4. 生きているカウントを増やす
-				++numInstance;
+					// 書き込み先は numInstance (0, 1, 2...)
+					// データ元は it (リストの中身)
+					instancingData[numInstance].WVP = worldViewProjectionMatrix;
+					instancingData[numInstance].world = worldMatrix;
+					instancingData[numInstance].color = it->color;
+					instancingData[numInstance].color.w = alpha;
+
+					// 生きているカウントを増やす
+					++numInstance;
+				}
+
+				// 削除しなかった場合のみ、手動でイテレータを次に進める
+				++it;
 			}
-
-#pragma endregion
 			input->Update();
 
 			if(input->TriggerKey(DIK_SPACE)){
