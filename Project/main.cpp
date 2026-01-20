@@ -29,6 +29,8 @@
 #include "Logger.h"
 #include "Camera.h"
 #include "CameraManager.h"
+#include "ParticleManager.h"
+#include "ParticleEmitter.h"
 
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
@@ -245,6 +247,26 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	object3d_2->SetTranslate({2.0f, 0.0f, 0.0f});
 	object3d_2->SetScale({1.0f, 1.0f, 1.0f});
 
+	// --- パーティクル関連の初期化 ---
+
+	// 1. マネージャの初期化 (シングルトン)
+	ParticleManager::GetInstance()->Initialize(dxCommon,srvManager);
+
+	// 2. パーティクルグループの作成
+	// ※ "resources/circle.png" は実際にリソースフォルダに入れている画像パスに書き換えてください
+	const std::string groupName = "Circle";
+	ParticleManager::GetInstance()->CreateParticleGroup(groupName,"resource/Circle.png");
+
+	// 3. エミッター (発生装置) の作成
+	// 引数: グループ名, 座標(Transform), 1回の発生数, 発生間隔(秒)
+	Transform emitterConfig;
+	emitterConfig.scale = {1.0f, 1.0f, 1.0f};
+	emitterConfig.rotate = {0.0f, 0.0f, 0.0f};
+	emitterConfig.translate = {0.0f, 0.0f, 0.0f}; // 原点から発生
+
+	// 0.2秒ごとに 10個ずつ発生させる設定
+	ParticleEmitter* particleEmitter = new ParticleEmitter(groupName,emitterConfig,10,0.2f);
+
 
 	// ---------------------------------------------------------------
 	// 4. カメラの初期化
@@ -303,6 +325,8 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			object3d_2->Update();
 			sprite->Update();
 			spriteBall->Update();
+			particleEmitter->Update();
+			ParticleManager::GetInstance()->Update(activeCamera);
 
 			// テスト機能
 			if(input->TriggerKey(DIK_SPACE)){
@@ -322,6 +346,11 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			object3d->Draw();       // plane
 			object3d_2->Draw();     // fence
 
+			if(activeCamera){
+				ParticleManager::GetInstance()->Draw(activeCamera->GetViewProjectionMatrix());
+			}
+
+
 			// 2D描画
 			spriteCommon->Draw();   // 共通設定
 			sprite->Draw();
@@ -338,14 +367,17 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	// 終了処理 (解放)
 	// ==============================================================================
 
-	// マネージャ解放
+	// マネージャ解放	
+
+	ParticleManager::GetInstance()->Finalize();
 	SrvManager::GetInstance()->Finalize();
 	TextureManager::GetInstance()->Finalize();
 	ModelManager::GetInstance()->Finalize();
 	CameraManager::GetInstance()->Finalize();
 
-
 	// オブジェクト解放
+
+	delete particleEmitter;
 	delete object3d;
 	delete object3d_2;
 	delete object3dCommon;

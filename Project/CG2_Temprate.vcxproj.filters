@@ -46,6 +46,18 @@
     <Filter Include="ヘッダー ファイル\3D">
       <UniqueIdentifier>{d38f906d-3ff8-466d-b99c-0017d121d161}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Camera">
+      <UniqueIdentifier>{27108f3a-8738-4396-9499-82b7f30953ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Manager">
+      <UniqueIdentifier>{46d5b522-7b1c-40c3-bcd2-ec3d075fb865}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Camera">
+      <UniqueIdentifier>{c39d1af7-48a9-4042-b0ec-b81cac21e9c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Manager">
+      <UniqueIdentifier>{7beb4d9f-872b-4001-ae60-0011f5140b38}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -112,15 +124,21 @@
       <Filter>ソース ファイル\3D</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Camera</Filter>
     </ClCompile>
     <ClCompile Include="CameraManager.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Camera</Filter>
     </ClCompile>
     <ClCompile Include="SrvManager.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Manager</Filter>
     </ClCompile>
     <ClCompile Include="ImGuiManager.cpp">
+      <Filter>ソース ファイル\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleEmitter.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -132,6 +150,9 @@
       <Filter>Resources\shader</Filter>
     </None>
     <None Include="resource\shader\Object3d.VS.hlsl">
+      <Filter>Resources\shader</Filter>
+    </None>
+    <None Include="resource\shader\Particle.hlsli">
       <Filter>Resources\shader</Filter>
     </None>
   </ItemGroup>
@@ -203,15 +224,21 @@
       <Filter>ヘッダー ファイル\3D</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Camera</Filter>
     </ClInclude>
     <ClInclude Include="CameraManager.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Camera</Filter>
     </ClInclude>
     <ClInclude Include="SrvManager.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Manager</Filter>
     </ClInclude>
     <ClInclude Include="ImGuiManager.h">
+      <Filter>ヘッダー ファイル\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleEmitter.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -224,5 +251,13 @@
     <ResourceCompile Include="CG2_Temprate.rc">
       <Filter>Resources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="resource\shader\Particle.PS.hlsl">
+      <Filter>Resources\shader</Filter>
+    </FxCompile>
+    <FxCompile Include="resource\shader\Particle.VS.hlsl">
+      <Filter>Resources\shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

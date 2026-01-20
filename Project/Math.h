@@ -41,6 +41,28 @@ inline bool operator!=(const Vector3& a,const Vector3& b){
 	return a.x != b.x || a.y != b.y || a.z != b.z;
 }
 
+// Vector3 += Vector3 (例: translate += velocity)
+inline Vector3& operator+=(Vector3& lhv,const Vector3& rhv){
+	lhv.x += rhv.x;
+	lhv.y += rhv.y;
+	lhv.z += rhv.z;
+	return lhv;
+}
+// Vector3 同士の足し算 (例: translate + randomTranslate)
+inline Vector3 operator+(const Vector3& v1,const Vector3& v2){
+	return {v1.x + v2.x, v1.y + v2.y, v1.z + v2.z};
+}
+
+
+
+inline Vector3 operator*(const Vector3& v,float s){
+	return {v.x * s, v.y * s, v.z * s};
+}
+
+inline Vector3 operator*(float s,const Vector3& v){
+	return {v.x * s, v.y * s, v.z * s};
+}
+
 struct Vector4{
 	float x,y,z,w;
 };
