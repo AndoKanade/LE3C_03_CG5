@@ -519,44 +519,51 @@ void DXCommon::PreDraw(){
 void DXCommon::PostDraw(){
 	HRESULT hr;
 
+	// 1. バックバッファのインデックス取得
 	UINT bbIndex = swapChain->GetCurrentBackBufferIndex();
 
+	// 2. リソースバリアの設定 (Render Target -> Present)
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-
 	barrier.Transition.pResource = swapChainResources[bbIndex].Get();
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 
-	// 4. バリアを積む
-	commandList.Get()->ResourceBarrier(1,&barrier);
+	// 3. バリアを積む
+	commandList->ResourceBarrier(1,&barrier);
 
-	// --- 以下は元のコードのまま ---
-	hr = commandList.Get()->Close();
+	// 4. コマンドリストを閉じる
+	hr = commandList->Close();
 	assert(SUCCEEDED(hr));
 
-	const Microsoft::WRL::ComPtr<ID3D12CommandList> commandLists[] = {commandList};
-	commandQueue.Get()->ExecuteCommandLists(1,commandLists->GetAddressOf());
+	// ■■■ 修正箇所: ここをシンプルにする ■■■
+	// ComPtrの配列ではなく、生のポインタ(ID3D12CommandList*)の配列を作る
+	ID3D12CommandList* commandLists[] = {commandList.Get()};
 
+	// 配列を渡す (要素数は1)
+	commandQueue->ExecuteCommandLists(1,commandLists);
+
+	// 5. FPS固定などの更新
 	UpdateFixFPS();
 
+	// 6. 画面のフリップ (Present)
 	swapChain->Present(1,0);
+
+	// 7. フェンス同期
 	fenceValue++;
 	commandQueue->Signal(fence.Get(),fenceValue);
 
 	if(fence->GetCompletedValue() < fenceValue){
 		fence->SetEventOnCompletion(fenceValue,fenceEvent);
-
 		WaitForSingleObject(fenceEvent,INFINITE);
 	}
+
+	// 8. 次フレーム用にコマンドアロケータとリストをリセット
 	hr = commandAllocator->Reset();
 	assert(SUCCEEDED(hr));
 	hr = commandList->Reset(commandAllocator.Get(),nullptr);
 	assert(SUCCEEDED(hr));
-
-	//	 bbIndex = swapChain->GetCurrentBackBufferIndex();
 }
-
 
 void DXCommon::InitializeFixFPS(){
 

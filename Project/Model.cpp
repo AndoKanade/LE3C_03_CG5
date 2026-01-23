@@ -191,14 +191,21 @@ void Model::CreateVertexData(){
 }
 
 void Model::CreateMaterialData(){
-	// リソース作成
-	materialResource = modelCommon_->GetDxCommon()->CreateBufferResource(sizeof(Material));
+	// ■■■ 1. バッファサイズの計算 (256バイトアライメント) ■■■
+	// これをしないと、GPUが「データが足りない！(範囲外アクセス)」とエラーを出します
+	size_t sizeInBytes = (sizeof(Material) + 0xff) & ~0xff;
+
+	// リソース作成 (計算した sizeInBytes を使う)
+	materialResource = modelCommon_->GetDxCommon()->CreateBufferResource(sizeInBytes);
 
 	// データを書き込むためのアドレスを取得
 	materialResource->Map(0,nullptr,reinterpret_cast<void**>(&materialData));
 
-	// 初期値設定 (白, ライティング有効, UV変換なし)
+	// 初期値設定
 	materialData->color = Vector4(1.0f,1.0f,1.0f,1.0f);
 	materialData->enableLighting = 1;
 	materialData->uvTransform = MakeIdentity4x4();
+
+	// ■■■ 2. shininess の初期化を追加 ■■■
+	materialData->shininess = 50.0f; // 輝きの鋭さ (とりあえず50.0f)
 }

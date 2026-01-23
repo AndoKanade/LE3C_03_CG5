@@ -25,9 +25,26 @@ inline bool operator!=(const Vector2& a,const Vector2& b){
 
 
 
+
 struct Vector3{
 	float x,y,z;
 };
+
+inline Vector3 Normalize(const Vector3& v){
+	Vector3 result = {0, 0, 0};
+
+	// ベクトルの長さを計算
+	float length = std::sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+
+	// 0除算を防ぐ (長さが0でない場合のみ割る)
+	if(length != 0.0f){
+		result.x = v.x / length;
+		result.y = v.y / length;
+		result.z = v.z / length;
+	}
+
+	return result;
+}
 
 inline bool operator<(const Vector3& a,const Vector3& b){
 	if(a.x != b.x)

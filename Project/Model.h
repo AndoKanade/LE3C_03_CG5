@@ -38,6 +38,7 @@ public: // --- 構造体定義 (データ構造) ---
 		int32_t enableLighting; // 4バイト
 		float padding[3];       // 4バイト * 3 = 12バイト (合計16バイトにするためのパディング)
 		Matrix4x4 uvTransform;
+		float shininess;
 	};
 
 public: // --- メンバ関数 ---

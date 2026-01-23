@@ -55,7 +55,11 @@ public: // --- メンバ関数 ---
 	const Vector3& GetScale() const{ return transform.scale; }
 	const Vector3& GetRotate() const{ return transform.rotate; }
 	const Vector3& GetTranslate() const{ return transform.translate; }
-
+	void SetLightDirection(const Vector3& direction){
+		if(directionalLightData){
+			directionalLightData->direction = Normalize(direction);
+		}
+	}
 private: // --- メンバ変数 ---
 
 	// 共通リソースへのポインタ

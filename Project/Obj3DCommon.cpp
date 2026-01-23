@@ -10,6 +10,18 @@ void Obj3dCommon::Initialize(DXCommon* dxcommon){
 
 	// パイプライン生成（この中でルートシグネチャ生成も呼ばれます）
 	CreateGraphicsPipelineState();
+	size_t sizeInBytes = (sizeof(CameraForGPU) + 0xff) & ~0xff;
+
+	// 2. リソース作成
+	cameraResource_ = dxCommon_->CreateBufferResource(sizeInBytes);
+
+	// 3. データを書き込めるようにアドレスを取得 (Map)
+	HRESULT hr = cameraResource_->Map(0,nullptr,reinterpret_cast<void**>(&cameraData_));
+	assert(SUCCEEDED(hr));
+
+	// 4. 初期値を入れておく
+	cameraData_->worldPosition = {0.0f, 0.0f, 0.0f};
+
 }
 
 // 描画共通設定（描画ループの前に一度だけ呼ぶ）
@@ -24,6 +36,17 @@ void Obj3dCommon::Draw(){
 
 	// トポロジ設定（三角形リスト）
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	if(cameraResource_){
+		// 現在のカメラ座標を更新 (Map済みデータに書き込み)
+		if(defaultCamera_){
+			cameraData_->worldPosition = defaultCamera_->GetTranslate();
+		}
+
+		// GPUにアドレスを渡す
+		commandList->SetGraphicsRootConstantBufferView(4,cameraResource_->GetGPUVirtualAddress());
+	}
+
 }
 
 void Obj3dCommon::CreateRootSignature(){
@@ -47,7 +70,7 @@ void Obj3dCommon::CreateRootSignature(){
 
 	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-	rootParameters[1].Descriptor.ShaderRegister = 0;
+	rootParameters[1].Descriptor.ShaderRegister = 1;
 
 	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
