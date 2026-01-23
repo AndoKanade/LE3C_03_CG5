@@ -1,2 +1,31 @@
-[*.{cpp,h,hlsl,hlsli}]
-charset=utf-8
+# ファイルの文字コード設定などの対象となる拡張子
+# (C++のソースファイルとヘッダーファイル)
+[*.{cpp,h,hpp}]
+
+# 文字コードをUTF-8に設定
+# ※Visual Studioで日本語コメントが文字化けする場合は utf-8-bom にしてください
+charset = utf-8
+
+# --- スペルチェック機能の設定 (Visual Studioなど) ---
+
+# スペルミスが見つかった時の重要度
+# error: エラー一覧に表示され、赤い波線が出る
+# warning: 警告として表示される
+spelling_error_severity = error
+
+# スペルチェックを行う対象の場所
+# identifiers: 変数名や関数名などの識別子
+# comments: コメント文の中身
+spelling_checkable_types = identifiers,comments
+
+# チェックに使用する言語設定
+# en-us: アメリカ英語としてチェックする
+spelling_languages = en-us
+
+# エディタ標準の「除外辞書（無視する単語リスト）」を使うかどうか
+# trueにすると、一般的なプログラミング用語などはエラーにならなくなる
+spelling_use_default_exclusion_dictionary = true
+
+# 独自の除外辞書ファイルの場所を指定
+# "exclusion.dic" というファイルを作り、そこに無視したい単語を改行区切りで書く
+spelling_exclusion_path = ./exclusion.dic
