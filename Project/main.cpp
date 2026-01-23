@@ -34,6 +34,7 @@
 
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
+#include "externals/imgui/imgui.h"
 #include "externals/imgui/imgui_impl_dx12.h"
 #include "externals/imgui/imgui_impl_win32.h"
 #include <iostream>
@@ -198,6 +199,36 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	// 音声データのロード
 	SoundData soundData = SoundLoadWave("resource/You_and_Me.wav");
 
+	// 1. ImGui専用のデスクリプタヒープを作成 (これがないと動きません)
+	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	desc.NumDescriptors = 1;
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> imguiSrvHeap;
+
+	// dxCommon->GetDevice() が必要です
+	HRESULT hr = dxCommon->GetDevice()->CreateDescriptorHeap(&desc,IID_PPV_ARGS(&imguiSrvHeap));
+	assert(SUCCEEDED(hr));
+
+	// 2. コンテキストの生成
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark(); // 見た目をダークモードに
+
+	// 3. Win32とDX12の初期化
+	// ※ winApi->GetHwnd() でウィンドウハンドルを取得しています
+	ImGui_ImplWin32_Init(winApi->GetHwnd());
+
+	ImGui_ImplDX12_Init(
+		dxCommon->GetDevice(),
+		2, // バックバッファの数 (通常は2)
+		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+		imguiSrvHeap.Get(),
+		imguiSrvHeap->GetCPUDescriptorHandleForHeapStart(),
+		imguiSrvHeap->GetGPUDescriptorHandleForHeapStart()
+	);
+
+
 	// ---------------------------------------------------------------
 	// 2. リソースマネージャ・共通部分の初期化
 	// ---------------------------------------------------------------
@@ -286,6 +317,8 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	// 共通部にセット
 	object3dCommon->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
 
+	// ループの外で変数を定義
+	float lightDir[3] = {0.0f, -1.0f, 0.0f};
 
 	// ==============================================================================
 	// ゲームループ
@@ -297,55 +330,54 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			// -----------------------------------------
 			// 更新処理
 			// -----------------------------------------
+
+			// ImGuiのフレーム開始処理
+			// (※ ImguiManagerを使わず直接書く場合は、以下の3行のコメントを外して有効にしてください)
+			ImGui_ImplDX12_NewFrame();
+			ImGui_ImplWin32_NewFrame();
+			ImGui::NewFrame();
+
 			input->Update();
 
 			// --- カメラ移動処理 (WASD) ---
-			// マネージャから現在のアクティブカメラを取得して操作する
 			Camera* activeCamera = CameraManager::GetInstance()->GetActiveCamera();
 			if(activeCamera){
 				const float kCameraSpeed = 0.1f;
 				Vector3 translate = activeCamera->GetTranslate();
-
-				if(input->PushKey(DIK_W)){ translate.z += kCameraSpeed; } // 奥へ
-				if(input->PushKey(DIK_S)){ translate.z -= kCameraSpeed; } // 手前へ
-				if(input->PushKey(DIK_A)){ translate.x -= kCameraSpeed; } // 左へ
-				if(input->PushKey(DIK_D)){ translate.x += kCameraSpeed; } // 右へ
-
+				if(input->PushKey(DIK_W)){ translate.z += kCameraSpeed; }
+				if(input->PushKey(DIK_S)){ translate.z -= kCameraSpeed; }
+				if(input->PushKey(DIK_A)){ translate.x -= kCameraSpeed; }
+				if(input->PushKey(DIK_D)){ translate.x += kCameraSpeed; }
 				activeCamera->SetTranslate(translate);
 			}
 
-			// マネージャ更新 (カメラ行列の計算など)
+			// マネージャ更新
 			CameraManager::GetInstance()->Update();
-
-			// 念のため毎フレームセット (カメラ切替に対応するため)
 			object3dCommon->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
 
-			static float lightAngle = 0.0f;
-			lightAngle += 0.02f; // 毎フレーム角度を増やす
+			// --- ImGuiのウィンドウ設定 ---
+			ImGui::Begin("Light Settings");
+			if(ImGui::DragFloat3("Direction",lightDir,0.01f,-1.0f,1.0f)){
+				// 変更があったので、正規化して書き戻す
+				Vector3 v = {lightDir[0], lightDir[1], lightDir[2]};
+				v = Normalize(v); // 長さを1にする
+				lightDir[0] = v.x;
+				lightDir[1] = v.y;
+				lightDir[2] = v.z;
+			}
+			ImGui::End();
 
-			// くるくる回るベクトルを計算
-			Vector3 lightDir;
-			lightDir.x = std::cos(lightAngle);
-			lightDir.y = -0.5f; // 少し下向き
-			lightDir.z = std::sin(lightAngle);
-
-			// Obj3dCommonにセットして反映！
-			object3d->SetLightDirection(lightDir);
+			// ■■■ 修正箇所1：配列をVector3に変換してセット ■■■
+			object3d->SetLightDirection({lightDir[0], lightDir[1], lightDir[2]});
 
 			// オブジェクト更新
 			object3d->Update();
-			//object3d_2->Update();
-			//sprite->Update();
-			//spriteBall->Update();
-			//particleEmitter->Update();
-			//ParticleManager::GetInstance()->Update(activeCamera);
+			// object3d_2->Update();
 
 			// テスト機能
 			if(input->TriggerKey(DIK_SPACE)){
 				Logger::Log("Trigger space\n");
-				// SoundPlayWave(xAudio2.Get(), soundData);
 			}
-
 
 			// -----------------------------------------
 			// 描画処理
@@ -354,19 +386,27 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			srvManager->PreDraw();
 
 			// 3D描画
-			object3dCommon->Draw(); // 共通設定
-			object3d->Draw();       // plane
-		//	object3d_2->Draw();     // fence
+			object3dCommon->Draw();
+			object3d->Draw();
+			// object3d_2->Draw();
 
 			if(activeCamera){
-		//		ParticleManager::GetInstance()->Draw(activeCamera->GetViewProjectionMatrix());
+				// ParticleManager::GetInstance()->Draw(...);
 			}
 
-
 			// 2D描画
-		//	spriteCommon->Draw();   // 共通設定
-		//	sprite->Draw();
-			// spriteBall->Draw();
+			// spriteCommon->Draw();
+			// sprite->Draw();
+
+
+			ImGui::Render();
+
+			// 2. コマンドリストにImGui用のヒープをセット (重要！)
+			ID3D12DescriptorHeap* ppHeaps[] = {imguiSrvHeap.Get()};
+			dxCommon->GetCommandList()->SetDescriptorHeaps(1,ppHeaps);
+
+			// 3. 描画コマンドを発行
+			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),dxCommon->GetCommandList());
 
 			dxCommon->PostDraw();
 		}
@@ -378,6 +418,10 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	// ==============================================================================
 	// 終了処理 (解放)
 	// ==============================================================================
+
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 
 	// マネージャ解放	
 
