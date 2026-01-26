@@ -98,6 +98,10 @@ public:
 		return commandList.Get();
 	}
 
+	size_t GetSwapChainResourcesNum() const{
+		return swapChainResources.size();
+	}
+
 private:
 	WinAPI* winApi_ = nullptr;
 

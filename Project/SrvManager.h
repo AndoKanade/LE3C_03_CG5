@@ -47,6 +47,8 @@ public: // --- デスクリプタ管理 ---
 
 public: // --- ハンドル取得 ---
 
+	ID3D12DescriptorHeap* GetDescriptorHeap() const{ return descriptorHeap.Get(); }
+
 	// CPUハンドル取得
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(uint32_t index);
 

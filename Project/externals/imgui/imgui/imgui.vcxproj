@@ -214,7 +214,10 @@
   <ItemGroup>
     <ClCompile Include="imgui.cpp" />
     <ClCompile Include="imgui_demo.cpp" />
-    <ClCompile Include="imgui_draw.cpp" />
+    <ClCompile Include="imgui_draw.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
+      </Optimization>
+    </ClCompile>
     <ClCompile Include="imgui_impl_dx12.cpp" />
     <ClCompile Include="imgui_impl_win32.cpp" />
     <ClCompile Include="imgui_tables.cpp" />

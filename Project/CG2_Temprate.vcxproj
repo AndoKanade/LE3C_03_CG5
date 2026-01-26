@@ -61,19 +61,19 @@
     <LibraryPath>$(ProjectDir)Lib;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)..\generated\obj\$(ProjectName)$\(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\generated\outputs\$(Configuration)\</OutDir>
-    <IncludePath>$(ProjectDir)externals\DirectXTex;$(SolutionDir)externals\imgui;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)externals\DirectXTex;$(SolutionDir)externals\imgui\imgui;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LibraryPath>$(ProjectDir)Lib;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)..\generated\obj\$(ProjectName)$\(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\generated\outputs\$(Configuration)\</OutDir>
-    <IncludePath>$(ProjectDir)externals\DirectXTex;$(SolutionDir)externals\imgui;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)externals\DirectXTex;$(SolutionDir)externals\imgui\imgui;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
     <LibraryPath>$(ProjectDir)Lib;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)..\generated\obj\$(ProjectName)$\(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\generated\outputs\$(Configuration)\</OutDir>
-    <IncludePath>$(ProjectDir)externals\DirectXTex;$(SolutionDir)externals\imgui;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)externals\DirectXTex;$(SolutionDir)externals\imgui\imgui;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

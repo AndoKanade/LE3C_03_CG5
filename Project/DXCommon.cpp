@@ -38,7 +38,6 @@ void DXCommon::Initialize(WinAPI* winApi){
 	InitViewportRect();
 	InitScissorRect();
 	CreateDXCCompiler();
-//	InitImGui();
 }
 
 void DXCommon::InitDevice(){
@@ -307,17 +306,6 @@ void DXCommon::CreateDXCCompiler(){
 	hr = dxcUtils->CreateDefaultIncludeHandler(&includeHandler);
 	assert(SUCCEEDED(hr));
 }
-
-//void DXCommon::InitImGui(){
-//	IMGUI_CHECKVERSION();
-//	ImGui::CreateContext();
-//	ImGui::StyleColorsDark();
-//	ImGui_ImplWin32_Init(winApi_->GetHwnd());
-//	ImGui_ImplDX12_Init(device.Get(),swapChainDesc.BufferCount,rtvDesc.Format,
-//		srvDescriptorHeap.Get(),
-//		srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-//		srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-//}
 
 ComPtr<ID3D12DescriptorHeap>
 DXCommon::CreateDiscriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType,

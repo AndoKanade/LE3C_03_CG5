@@ -34,9 +34,7 @@
 
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
-#include "externals/imgui/imgui/imgui.h"
-#include "externals/imgui/imgui/imgui_impl_dx12.h"
-#include "externals/imgui/imgui/imgui_impl_win32.h"
+#include "ImGuiManager.h"
 #include <iostream>
 #include <map>
 #include "SrvManager.h"
@@ -183,11 +181,13 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	DXCommon* dxCommon = new DXCommon();
 	dxCommon->Initialize(winApi);
 
-	Input* input = new Input();
-	input->Initialize(winApi);
-
 	SrvManager* srvManager = SrvManager::GetInstance();
 	srvManager->Initialize(dxCommon);
+
+	ImGuiManager::GetInstance()->Initialize(winApi,dxCommon);
+
+	Input* input = new Input();
+	input->Initialize(winApi);
 
 	// オーディオ (XAudio2)
 	Microsoft::WRL::ComPtr<IXAudio2> xAudio2;
@@ -198,22 +198,6 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 	// 音声データのロード
 	SoundData soundData = SoundLoadWave("resource/You_and_Me.wav");
-
-	// 1. ImGui専用のデスクリプタヒープを作成 (これがないと動きません)
-	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	desc.NumDescriptors = 1;
-	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> imguiSrvHeap;
-
-	// dxCommon->GetDevice() が必要です
-	HRESULT hr = dxCommon->GetDevice()->CreateDescriptorHeap(&desc,IID_PPV_ARGS(&imguiSrvHeap));
-	assert(SUCCEEDED(hr));
-
-	// 2. コンテキストの生成
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui::StyleColorsDark(); // 見た目をダークモードに
 
 	// ---------------------------------------------------------------
 	// 2. リソースマネージャ・共通部分の初期化
@@ -226,9 +210,9 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 	// スプライト共通
 	SpriteCommon* spriteCommon = new SpriteCommon();
-//	spriteCommon->Initialize(dxCommon);
+	//	spriteCommon->Initialize(dxCommon);
 
-	// 3Dオブジェクト共通
+		// 3Dオブジェクト共通
 	Obj3dCommon* object3dCommon = new Obj3dCommon();
 	object3dCommon->Initialize(dxCommon);
 
@@ -254,7 +238,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	// 3Dオブジェクト 1 (plane)
 	Obj3D* object3d = new Obj3D();
 	object3d->Initialize(object3dCommon);
-	object3d->SetModel("sphere.obj");
+	object3d->SetModel("plane.obj");
 	object3d->SetTranslate({0.0f, 0.0f, 0.0f});
 	object3d->SetScale({1.0f, 1.0f, 1.0f});
 
@@ -317,6 +301,9 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			// 更新処理
 			// -----------------------------------------
 
+			// 1. ImGuiのフレーム開始
+			ImGuiManager::GetInstance()->Begin();
+
 			input->Update();
 
 			// --- カメラ移動処理 (WASD) ---
@@ -335,17 +322,18 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			CameraManager::GetInstance()->Update();
 			object3dCommon->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
 
-			// ■■■ 修正箇所1：配列をVector3に変換してセット ■■■
 			object3d->SetLightDirection({lightDir[0], lightDir[1], lightDir[2]});
 
 			// オブジェクト更新
 			object3d->Update();
-			// object3d_2->Update();
 
 			// テスト機能
 			if(input->TriggerKey(DIK_SPACE)){
 				Logger::Log("Trigger space\n");
 			}
+
+			// 2. ImGuiの更新終了 (描画データの生成)
+			ImGuiManager::GetInstance()->End();
 
 			// -----------------------------------------
 			// 描画処理
@@ -356,22 +344,12 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			// 3D描画
 			object3dCommon->Draw();
 			object3d->Draw();
-			// object3d_2->Draw();
 
-			if(activeCamera){
-				// ParticleManager::GetInstance()->Draw(...);
-			}
+			// 2D描画などはここで...
 
-			// 2D描画
-			// spriteCommon->Draw();
-			// sprite->Draw();
-
-
-			ImGui::Render();
-
-			// 2. コマンドリストにImGui用のヒープをセット (重要！)
-			ID3D12DescriptorHeap* ppHeaps[] = {imguiSrvHeap.Get()};
-			dxCommon->GetCommandList()->SetDescriptorHeaps(1,ppHeaps);
+			// 3. ImGuiの描画実行
+			// ※ImGuiManager::Draw()内部でヒープセットとRenderDrawDataが行われます
+			ImGuiManager::GetInstance()->Draw();
 
 			dxCommon->PostDraw();
 		}
@@ -386,6 +364,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 
 	// マネージャ解放	
 
+	ImGuiManager::GetInstance()->Finalize();
 	ParticleManager::GetInstance()->Finalize();
 	SrvManager::GetInstance()->Finalize();
 	TextureManager::GetInstance()->Finalize();
