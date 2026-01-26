@@ -34,9 +34,9 @@
 
 #include "externals/DirectXTex/DirectXTex.h"
 #include "externals/DirectXTex/d3dx12.h"
-#include "externals/imgui/imgui.h"
-#include "externals/imgui/imgui_impl_dx12.h"
-#include "externals/imgui/imgui_impl_win32.h"
+#include "externals/imgui/imgui/imgui.h"
+#include "externals/imgui/imgui/imgui_impl_dx12.h"
+#include "externals/imgui/imgui/imgui_impl_win32.h"
 #include <iostream>
 #include <map>
 #include "SrvManager.h"
@@ -215,20 +215,6 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark(); // 見た目をダークモードに
 
-	// 3. Win32とDX12の初期化
-	// ※ winApi->GetHwnd() でウィンドウハンドルを取得しています
-	ImGui_ImplWin32_Init(winApi->GetHwnd());
-
-	ImGui_ImplDX12_Init(
-		dxCommon->GetDevice(),
-		2, // バックバッファの数 (通常は2)
-		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-		imguiSrvHeap.Get(),
-		imguiSrvHeap->GetCPUDescriptorHandleForHeapStart(),
-		imguiSrvHeap->GetGPUDescriptorHandleForHeapStart()
-	);
-
-
 	// ---------------------------------------------------------------
 	// 2. リソースマネージャ・共通部分の初期化
 	// ---------------------------------------------------------------
@@ -331,12 +317,6 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			// 更新処理
 			// -----------------------------------------
 
-			// ImGuiのフレーム開始処理
-			// (※ ImguiManagerを使わず直接書く場合は、以下の3行のコメントを外して有効にしてください)
-			ImGui_ImplDX12_NewFrame();
-			ImGui_ImplWin32_NewFrame();
-			ImGui::NewFrame();
-
 			input->Update();
 
 			// --- カメラ移動処理 (WASD) ---
@@ -354,18 +334,6 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			// マネージャ更新
 			CameraManager::GetInstance()->Update();
 			object3dCommon->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
-
-			// --- ImGuiのウィンドウ設定 ---
-			ImGui::Begin("Light Settings");
-			if(ImGui::DragFloat3("Direction",lightDir,0.01f,-1.0f,1.0f)){
-				// 変更があったので、正規化して書き戻す
-				Vector3 v = {lightDir[0], lightDir[1], lightDir[2]};
-				v = Normalize(v); // 長さを1にする
-				lightDir[0] = v.x;
-				lightDir[1] = v.y;
-				lightDir[2] = v.z;
-			}
-			ImGui::End();
 
 			// ■■■ 修正箇所1：配列をVector3に変換してセット ■■■
 			object3d->SetLightDirection({lightDir[0], lightDir[1], lightDir[2]});
@@ -405,9 +373,6 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			ID3D12DescriptorHeap* ppHeaps[] = {imguiSrvHeap.Get()};
 			dxCommon->GetCommandList()->SetDescriptorHeaps(1,ppHeaps);
 
-			// 3. 描画コマンドを発行
-			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),dxCommon->GetCommandList());
-
 			dxCommon->PostDraw();
 		}
 	}
@@ -418,10 +383,6 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	// ==============================================================================
 	// 終了処理 (解放)
 	// ==============================================================================
-
-	ImGui_ImplDX12_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
 
 	// マネージャ解放	
 

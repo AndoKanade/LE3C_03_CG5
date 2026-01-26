@@ -9,9 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="imgui">
-      <UniqueIdentifier>{436aae08-4a93-4ff9-93c6-2e3053c39372}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ソース ファイル\Base">
       <UniqueIdentifier>{0587a549-a220-4151-b8bc-94a28041f7cd}</UniqueIdentifier>
     </Filter>
@@ -58,31 +55,16 @@
     <Filter Include="ヘッダー ファイル\Manager">
       <UniqueIdentifier>{7beb4d9f-872b-4001-ae60-0011f5140b38}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Particle">
+      <UniqueIdentifier>{bceacf27-f022-4902-8ca0-480e770c4050}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Particle">
+      <UniqueIdentifier>{8343b2f2-f15f-4b8b-96d3-44efb15f7ee8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="externals\imgui\imgui.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="externals\imgui\imgui_demo.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="externals\imgui\imgui_draw.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="externals\imgui\imgui_impl_dx12.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="externals\imgui\imgui_impl_win32.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="externals\imgui\imgui_tables.cpp">
-      <Filter>imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="externals\imgui\imgui_widgets.cpp">
-      <Filter>imgui</Filter>
     </ClCompile>
     <ClCompile Include="DXCommon.cpp">
       <Filter>ソース ファイル\Base</Filter>
@@ -135,11 +117,11 @@
     <ClCompile Include="ImGuiManager.cpp">
       <Filter>ソース ファイル\Manager</Filter>
     </ClCompile>
-    <ClCompile Include="ParticleManager.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="ParticleEmitter.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Particle</Filter>
+    </ClCompile>
+    <ClCompile Include="ParticleManager.cpp">
+      <Filter>ソース ファイル\Particle</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -157,30 +139,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="externals\imgui\imconfig.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="externals\imgui\imgui.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="externals\imgui\imgui_impl_dx12.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="externals\imgui\imgui_impl_win32.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="externals\imgui\imgui_internal.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="externals\imgui\imstb_rectpack.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="externals\imgui\imstb_textedit.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="externals\imgui\imstb_truetype.h">
-      <Filter>imgui</Filter>
-    </ClInclude>
     <ClInclude Include="DXCommon.h">
       <Filter>ヘッダー ファイル\Base</Filter>
     </ClInclude>
@@ -235,17 +193,12 @@
     <ClInclude Include="ImGuiManager.h">
       <Filter>ヘッダー ファイル\Manager</Filter>
     </ClInclude>
-    <ClInclude Include="ParticleManager.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="ParticleEmitter.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Particle</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="externals\imgui\LICENSE.txt">
-      <Filter>imgui</Filter>
-    </Text>
+    <ClInclude Include="ParticleManager.h">
+      <Filter>ヘッダー ファイル\Particle</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CG2_Temprate.rc">
