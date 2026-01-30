@@ -1,9 +1,32 @@
 #define _USE_MATH_DEFINES
 #define PI 3.14159265f
+
+// --- エンジン・ライブラリ関連ヘッダー ---
 #include "DXCommon.h"
 #include "Input.h"
 #include "StringUtility.h"
 #include "WinAPI.h"
+#include "Math.h"
+#include "Logger.h"
+
+// --- マネージャクラス ---
+#include "SrvManager.h"
+#include "ImGuiManager.h"
+#include "TextureManager.h"
+#include "ModelManager.h"
+#include "SpriteCommon.h"
+#include "Obj3DCommon.h"
+#include "CameraManager.h"
+#include "ParticleManager.h"
+#include "SoundManager.h" // 追加
+
+// --- ゲームオブジェクト ---
+#include "Sprite.h"
+#include "Obj3D.h"
+#include "Camera.h"
+#include "ParticleEmitter.h"
+
+// --- その他 ---
 #include <chrono>
 #include <cmath>
 #include <dbghelp.h>
@@ -13,33 +36,11 @@
 #include <format>
 #include <fstream>
 #include <sstream>
-#include <string.h>
-#include <strsafe.h>
+#include <string>
 #include <vector>
-#include <xaudio2.h>
+#include <strsafe.h>
 
-// エンジン内ヘッダー
-#include "SpriteCommon.h"
-#include "Sprite.h"
-#include "Math.h"
-#include "Obj3DCommon.h"
-#include "Obj3D.h"
-#include "ModelManager.h"
-#include "TextureManager.h"
-#include "Logger.h"
-#include "Camera.h"
-#include "CameraManager.h"
-#include "ParticleManager.h"
-#include "ParticleEmitter.h"
-
-#include "externals/DirectXTex/DirectXTex.h"
-#include "externals/DirectXTex/d3dx12.h"
-#include "ImGuiManager.h"
-#include <iostream>
-#include <map>
-#include "SrvManager.h"
-
-// ライブラリリンク
+// --- ライブラリリンク ---
 #pragma comment(lib, "Dbghelp.lib")
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "dxcompiler.lib")
@@ -48,12 +49,18 @@
 
 using namespace DirectX;
 
-// ImGui用プロシージャハンドラ
+// ==========================================================================
+// ImGui プロシージャハンドラ
+// ==========================================================================
+#ifdef _DEBUG
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lPalam);
+#endif
 
+// ==========================================================================
 // ウィンドウプロシージャ
+// ==========================================================================
 LRESULT CALLBACK WindowProc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam){
-#ifdef USE_IMGUI
+#ifdef _DEBUG
 	if(ImGui_ImplWin32_WndProcHandler(hwnd,msg,wparam,lparam)){
 		return true;
 	}
@@ -66,7 +73,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd,UINT msg,WPARAM wparam,LPARAM lparam){
 	return DefWindowProcW(hwnd,msg,wparam,lparam);
 }
 
-// リソースリークチェッカー
+// ==========================================================================
+// デバッグ・エラーハンドリング
+// ==========================================================================
 struct D3DResourceLeakChecker{
 	~D3DResourceLeakChecker(){
 		Microsoft::WRL::ComPtr<IDXGIDebug1> debug;
@@ -78,73 +87,6 @@ struct D3DResourceLeakChecker{
 	}
 };
 
-// ==========================================================================
-// サウンド関連 (構造体・関数)
-// ==========================================================================
-#pragma region サウンド処理
-struct ChunkHeader{ char id[4]; int32_t size; };
-struct RiffHeader{ ChunkHeader chunk; char type[4]; };
-struct FormatChunk{ ChunkHeader chunk; WAVEFORMATEX fmt; };
-struct SoundData{ WAVEFORMATEX wfex; BYTE* pBUffer; unsigned int bufferSize; };
-
-SoundData SoundLoadWave(const char* filename){
-	std::ifstream file;
-	file.open(filename,std::ios_base::binary);
-	assert(file.is_open());
-
-	RiffHeader riff;
-	file.read((char*)&riff,sizeof(riff));
-	if(strncmp(riff.chunk.id,"RIFF",4) != 0) assert(0);
-	if(strncmp(riff.type,"WAVE",4) != 0) assert(0);
-
-	FormatChunk format = {};
-	file.read((char*)&format,sizeof(ChunkHeader));
-	if(strncmp(format.chunk.id,"fmt ",4) != 0) assert(0);
-	assert(format.chunk.size <= sizeof(format.fmt));
-	file.read((char*)&format.fmt,format.chunk.size);
-
-	ChunkHeader data;
-	file.read((char*)&data,sizeof(data));
-	if(strncmp(data.id,"JUNK",4) == 0){
-		file.seekg(data.size,std::ios_base::cur);
-		file.read((char*)&data,sizeof(data));
-	}
-	if(strncmp(data.id,"data",4) != 0) assert(0);
-
-	char* pBuffer = new char[data.size];
-	file.read(pBuffer,data.size);
-	file.close();
-
-	SoundData soundData = {};
-	soundData.wfex = format.fmt;
-	soundData.pBUffer = reinterpret_cast<BYTE*>(pBuffer);
-	soundData.bufferSize = data.size;
-	return soundData;
-}
-
-void SoundUnload(SoundData* soundData){
-	delete[] soundData->pBUffer;
-	soundData->pBUffer = 0;
-	soundData->bufferSize = 0;
-	soundData->wfex = {};
-}
-
-void SoundPlayWave(IXAudio2* xAudio2,const SoundData& soundData){
-	HRESULT result;
-	IXAudio2SourceVoice* pSourceVoice = nullptr;
-	result = xAudio2->CreateSourceVoice(&pSourceVoice,&soundData.wfex);
-	assert(SUCCEEDED(result));
-
-	XAUDIO2_BUFFER buf{};
-	buf.pAudioData = soundData.pBUffer;
-	buf.AudioBytes = soundData.bufferSize;
-	buf.Flags = XAUDIO2_END_OF_STREAM;
-	pSourceVoice->SubmitSourceBuffer(&buf);
-	pSourceVoice->Start();
-}
-#pragma endregion
-
-#pragma region ダンプ出力
 static LONG WINAPI ExportDump(EXCEPTION_POINTERS* exception){
 	SYSTEMTIME time;
 	GetLocalTime(&time);
@@ -164,8 +106,6 @@ static LONG WINAPI ExportDump(EXCEPTION_POINTERS* exception){
 		MiniDumpNormal,&minidumpinformation,nullptr,nullptr);
 	return EXCEPTION_EXECUTE_HANDLER;
 }
-#pragma endregion
-
 
 // ==========================================================================
 // メイン関数
@@ -183,224 +123,210 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	DXCommon* dxCommon = new DXCommon();
 	dxCommon->Initialize(winApi);
 
-	SrvManager* srvManager = SrvManager::GetInstance();
-	srvManager->Initialize(dxCommon);
-
-	ImGuiManager::GetInstance()->Initialize(winApi,dxCommon);
-
 	Input* input = new Input();
 	input->Initialize(winApi);
 
-	// オーディオ (XAudio2)
-	Microsoft::WRL::ComPtr<IXAudio2> xAudio2;
-	IXAudio2MasteringVoice* masterVoice = nullptr;
-	HRESULT result = XAudio2Create(&xAudio2,0,XAUDIO2_DEFAULT_PROCESSOR);
-	result = xAudio2->CreateMasteringVoice(&masterVoice);
-	assert(SUCCEEDED(result));
+	// --- マネージャ群の初期化 ---
+	// ※ 依存関係に注意 (SrvManagerは早めに)
+	SrvManager* srvManager = SrvManager::GetInstance();
+	srvManager->Initialize(dxCommon);
 
-	// 音声データのロード
-	SoundData soundData = SoundLoadWave("resource/You_and_Me.wav");
+	// Debugビルド時のみImGuiを初期化
+#ifdef _DEBUG
+	ImGuiManager::GetInstance()->Initialize(winApi,dxCommon);
+#endif
 
-	// ---------------------------------------------------------------
-	// 2. リソースマネージャ・共通部分の初期化
-	// ---------------------------------------------------------------
+	// サウンドマネージャ
+	SoundManager::GetInstance()->Initialize();
 
-	// テクスチャ
+	// リソース系マネージャ
 	TextureManager::GetInstance()->Initialize(dxCommon,srvManager);
-	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
-	TextureManager::GetInstance()->LoadTexture("resource/monsterball.png");
+	ModelManager::GetInstance()->Initialize(dxCommon);
+	CameraManager::GetInstance()->Initialize();
+	ParticleManager::GetInstance()->Initialize(dxCommon,srvManager);
 
-	// スプライト共通
+	// 描画共通クラス
 	SpriteCommon* spriteCommon = new SpriteCommon();
-	//	spriteCommon->Initialize(dxCommon);
+	// spriteCommon->Initialize(dxCommon); // 必要ならコメントイン
 
-		// 3Dオブジェクト共通
 	Obj3dCommon* object3dCommon = new Obj3dCommon();
 	object3dCommon->Initialize(dxCommon);
 
-	// モデルマネージャ
-	ModelManager::GetInstance()->Initialize(dxCommon);
-	ModelManager::GetInstance()->LoadModel("plane.obj"); // plane読み込み
-	ModelManager::GetInstance()->LoadModel("fence.obj"); // fence読み込み
-	ModelManager::GetInstance()->LoadModel("sphere.obj"); // sphere読み込み
+	// ---------------------------------------------------------------
+	// 2. リソースのロード
+	// ---------------------------------------------------------------
+	// テクスチャ
+	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
+	TextureManager::GetInstance()->LoadTexture("resource/monsterball.png");
+
+	// モデル
+	ModelManager::GetInstance()->LoadModel("plane.obj");
+	ModelManager::GetInstance()->LoadModel("fence.obj");
+	ModelManager::GetInstance()->LoadModel("sphere.obj");
+
+	// パーティクルリソース
+	ParticleManager::GetInstance()->CreateParticleGroup("Circle","resource/Circle.png");
+
+	// サウンド
+	const std::string kBgmPath = "resource/You_and_Me.wav"; // 定数化
+	SoundManager::GetInstance()->LoadWave(kBgmPath);
 
 
 	// ---------------------------------------------------------------
-	// 3. ゲームオブジェクトの生成
+	// 3. ゲームオブジェクトの生成・初期設定
 	// ---------------------------------------------------------------
 
-	// スプライト
-	//Sprite* sprite = new Sprite();
-	//sprite->Initialize(spriteCommon,"resource/uvChecker.png");
+	// 3Dオブジェクト
+	Obj3D* planeObj = new Obj3D();
+	planeObj->Initialize(object3dCommon);
+	planeObj->SetModel("plane.obj");
+	planeObj->SetScale({1.0f, 1.0f, 1.0f});
 
-	//Sprite* spriteBall = new Sprite();
-	//spriteBall->Initialize(spriteCommon,"resource/monsterball.png");
-	//spriteBall->SetPosition({200.0f, 0.0f});
+	Obj3D* fenceObj = new Obj3D();
+	fenceObj->Initialize(object3dCommon);
+	fenceObj->SetModel("fence.obj");
+	fenceObj->SetTranslate({2.0f, 0.0f, 0.0f});
 
-	// 3Dオブジェクト 1 (plane)
-	Obj3D* object3d = new Obj3D();
-	object3d->Initialize(object3dCommon);
-	object3d->SetModel("plane.obj");
-	object3d->SetTranslate({0.0f, 0.0f, 0.0f});
-	object3d->SetScale({1.0f, 1.0f, 1.0f});
-
-	// 3Dオブジェクト 2 (fence)
-	Obj3D* object3d_2 = new Obj3D();
-	object3d_2->Initialize(object3dCommon);
-	object3d_2->SetModel("fence.obj");
-	object3d_2->SetTranslate({2.0f, 0.0f, 0.0f});
-	object3d_2->SetScale({1.0f, 1.0f, 1.0f});
-
-	// --- パーティクル関連の初期化 ---
-
-	// 1. マネージャの初期化 (シングルトン)
-	ParticleManager::GetInstance()->Initialize(dxCommon,srvManager);
-
-	// 2. パーティクルグループの作成
-	// ※ "resources/circle.png" は実際にリソースフォルダに入れている画像パスに書き換えてください
-	const std::string groupName = "Circle";
-	ParticleManager::GetInstance()->CreateParticleGroup(groupName,"resource/Circle.png");
-
-	// 3. エミッター (発生装置) の作成
-	// 引数: グループ名, 座標(Transform), 1回の発生数, 発生間隔(秒)
+	// パーティクルエミッター
 	Transform emitterConfig;
 	emitterConfig.scale = {1.0f, 1.0f, 1.0f};
-	emitterConfig.rotate = {0.0f, 0.0f, 0.0f};
-	emitterConfig.translate = {0.0f, 0.0f, 0.0f}; // 原点から発生
+	emitterConfig.translate = {0.0f, 0.0f, 0.0f};
+	ParticleEmitter* particleEmitter = new ParticleEmitter("Circle",emitterConfig,10,0.2f);
 
-	// 0.2秒ごとに 10個ずつ発生させる設定
-	ParticleEmitter* particleEmitter = new ParticleEmitter(groupName,emitterConfig,10,0.2f);
-
-
-	// ---------------------------------------------------------------
-	// 4. カメラの初期化
-	// ---------------------------------------------------------------
-	CameraManager::GetInstance()->Initialize();
-
-	// デフォルトカメラ作成
+	// カメラ設定
 	CameraManager::GetInstance()->CreateCamera("default");
 	auto* defaultCamera = CameraManager::GetInstance()->GetCamera("default");
-	defaultCamera->SetRotate({0.0f, 0.0f, 0.0f});
 	defaultCamera->SetTranslate({0.0f, 0.0f, -10.0f});
-
-	// アクティブ設定
 	CameraManager::GetInstance()->SetActiveCamera("default");
-
-	// 共通部にセット
 	object3dCommon->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
 
-	// ループの外で変数を定義
+	// その他変数
 	float lightDir[3] = {0.0f, -1.0f, 0.0f};
+	bool isPaused = false;
 
 	// ==============================================================================
 	// ゲームループ
 	// ==============================================================================
 	while(true){
+		// ウィンドウメッセージ処理
 		if(winApi->ProcessMessage()){
 			break;
-		} else{
-			// -----------------------------------------
-			// 更新処理
-			// -----------------------------------------
+		}
 
-			// 1. ImGuiのフレーム開始
-			ImGuiManager::GetInstance()->Begin();
+		// -----------------------------------------
+		// 1. 更新処理 (Update)
+		// -----------------------------------------
+		input->Update();
 
-			input->Update();
-
-			// --- カメラ取得 ---
-			Camera* activeCamera = CameraManager::GetInstance()->GetActiveCamera();
-
-			if(activeCamera){
-				// 現在の座標を取得
-				Vector3 translate = activeCamera->GetTranslate();
-
-
-				// ImGuiのウィンドウを作る
+		// --- ImGui 開始 ---
 #ifdef USE_IMGUI
-				ImGui::Begin("Camera Control");
-
-
-				ImGui::DragFloat3("Position",&translate.x,0.1f);
-
-				// ウィンドウの終わり
-				ImGui::End();
+		ImGuiManager::GetInstance()->Begin();
 #endif
 
-				activeCamera->SetTranslate(translate);
-			}
+		// --- カメラ制御 ---
+		Camera* activeCamera = CameraManager::GetInstance()->GetActiveCamera();
+		if(activeCamera){
+			Vector3 translate = activeCamera->GetTranslate();
 
-			// マネージャ更新
-			CameraManager::GetInstance()->Update();
-			object3dCommon->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
-
-			object3d->SetLightDirection({lightDir[0], lightDir[1], lightDir[2]});
-
-			// オブジェクト更新
-			object3d->Update();
-
-			// テスト機能
-			if(input->TriggerKey(DIK_SPACE)){
-				Logger::Log("Trigger space\n");
-			}
-
-			// 2. ImGuiの更新終了
-			ImGuiManager::GetInstance()->End();
-
-			// -----------------------------------------
-			// 描画処理
-			// -----------------------------------------
-			dxCommon->PreDraw();
-			srvManager->PreDraw();
-
-			// 3D描画
-			object3dCommon->Draw();
-			object3d->Draw();
-
-			// 3. ImGuiの描画実行
-			ImGuiManager::GetInstance()->Draw();
-
-			dxCommon->PostDraw();
+#ifdef USE_IMGUI
+			ImGui::Begin("Camera Control");
+			ImGui::DragFloat3("Position",&translate.x,0.1f);
+			ImGui::End();
+#endif
+			activeCamera->SetTranslate(translate);
 		}
+
+		// マネージャ更新
+		CameraManager::GetInstance()->Update();
+		object3dCommon->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
+
+		// オブジェクト更新
+		planeObj->SetLightDirection({lightDir[0], lightDir[1], lightDir[2]});
+		planeObj->Update();
+		// fenceObj->Update(); // 必要なら追加
+
+		// --- サウンド入力処理 ---
+
+		// スペースキー: 再生
+		if(input->TriggerKey(DIK_SPACE)){
+			Logger::Log("Play Sound\n");
+			// 再生中でなければ再生する
+			if(!SoundManager::GetInstance()->IsPlaying(kBgmPath)){
+				SoundManager::GetInstance()->PlayWave(kBgmPath,0.5f,true);
+			}
+		}
+
+		// エンターキー: 停止
+		if(input->TriggerKey(DIK_RETURN)){
+			Logger::Log("Stop Sound\n");
+			SoundManager::GetInstance()->StopWave(kBgmPath);
+		}
+
+		// Pキー: ポーズ切り替え
+		if(input->TriggerKey(DIK_P)){
+			if(isPaused){
+				SoundManager::GetInstance()->ResumeWave(kBgmPath);
+				isPaused = false;
+				Logger::Log("Resume Sound\n");
+			} else{
+				SoundManager::GetInstance()->PauseWave(kBgmPath);
+				isPaused = true;
+				Logger::Log("Pause Sound\n");
+			}
+		}
+
+		// --- ImGui 終了 ---
+#ifdef USE_IMGUI
+		ImGuiManager::GetInstance()->End();
+#endif
+
+		// -----------------------------------------
+		// 2. 描画処理 (Draw)
+		// -----------------------------------------
+		dxCommon->PreDraw();
+		srvManager->PreDraw();
+
+		// 3D描画
+		object3dCommon->Draw();
+		planeObj->Draw();
+		// fenceObj->Draw(); // 必要なら描画
+
+		// ImGui描画
+#ifdef USE_IMGUI
+		ImGuiManager::GetInstance()->Draw();
+#endif
+
+		dxCommon->PostDraw();
 	}
 
 	Logger::Log("Game Loop Finished.\n");
 
-
 	// ==============================================================================
 	// 終了処理 (解放)
 	// ==============================================================================
+	// 生成順の逆で解放するのが安全です
 
-	// マネージャ解放	
-
+	// マネージャの終了処理
+#ifdef USE_IMGUI
 	ImGuiManager::GetInstance()->Finalize();
+#endif
+	SoundManager::GetInstance()->Finalize();
 	ParticleManager::GetInstance()->Finalize();
-	SrvManager::GetInstance()->Finalize();
-	TextureManager::GetInstance()->Finalize();
 	ModelManager::GetInstance()->Finalize();
+	TextureManager::GetInstance()->Finalize();
 	CameraManager::GetInstance()->Finalize();
+	SrvManager::GetInstance()->Finalize();
 
-	// オブジェクト解放
-
+	// ゲームオブジェクト解放
 	delete particleEmitter;
-	delete object3d;
-	delete object3d_2;
+	delete planeObj;
+	delete fenceObj;
 	delete object3dCommon;
-
-	//delete spriteBall;
-	//delete sprite;
 	delete spriteCommon;
 
 	// 基盤解放
-	delete dxCommon;
 	delete input;
-
-	// サウンド解放
-	xAudio2.Reset();
-	SoundUnload(&soundData);
-
-	// ウィンドウ解放
-	winApi->Finalize();
+	delete dxCommon;
 	delete winApi;
 
 	return 0;
