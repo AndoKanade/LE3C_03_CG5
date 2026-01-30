@@ -168,8 +168,8 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 	ParticleManager::GetInstance()->CreateParticleGroup("Circle","resource/Circle.png");
 
 	// サウンド
-	const std::string kBgmPath = "resource/You_and_Me.wav"; // 定数化
-	SoundManager::GetInstance()->LoadWave(kBgmPath);
+	const std::string kBgmPath = "resource/You_and_Me.mp3"; // 定数化
+	SoundManager::GetInstance()->SoundLoadFile(kBgmPath);
 
 
 	// ---------------------------------------------------------------
@@ -252,24 +252,24 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE,LPSTR,int){
 			Logger::Log("Play Sound\n");
 			// 再生中でなければ再生する
 			if(!SoundManager::GetInstance()->IsPlaying(kBgmPath)){
-				SoundManager::GetInstance()->PlayWave(kBgmPath,0.5f,true);
+				SoundManager::GetInstance()->PlayAudio(kBgmPath,0.5f,true);
 			}
 		}
 
 		// エンターキー: 停止
 		if(input->TriggerKey(DIK_RETURN)){
 			Logger::Log("Stop Sound\n");
-			SoundManager::GetInstance()->StopWave(kBgmPath);
+			SoundManager::GetInstance()->StopAudio(kBgmPath);
 		}
 
 		// Pキー: ポーズ切り替え
 		if(input->TriggerKey(DIK_P)){
 			if(isPaused){
-				SoundManager::GetInstance()->ResumeWave(kBgmPath);
+				SoundManager::GetInstance()->ResumeAudio(kBgmPath);
 				isPaused = false;
 				Logger::Log("Resume Sound\n");
 			} else{
-				SoundManager::GetInstance()->PauseWave(kBgmPath);
+				SoundManager::GetInstance()->PauseAudio(kBgmPath);
 				isPaused = true;
 				Logger::Log("Pause Sound\n");
 			}

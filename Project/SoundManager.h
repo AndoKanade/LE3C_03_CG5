@@ -1,27 +1,39 @@
 #pragma once
 
-#include <wrl.h>
-#include <xaudio2.h>
+// --- 標準ライブラリ ---
 #include <string>
 #include <map>
+#include <vector>
 #include <cstdint>
 
-// XAudio2ライブラリのリンク設定
+// --- DirectX / Windows関連 ---
+#include <wrl.h>
+#include <xaudio2.h>
+
+// --- Media Foundation関連 ---
+#include <mfapi.h>
+#include <mfidl.h>
+#include <mfreadwrite.h>
+
+// --- ライブラリリンク設定 ---
 #pragma comment(lib, "xaudio2.lib")
+#pragma comment(lib, "mfplat.lib")
+#pragma comment(lib, "mfreadwrite.lib")
+#pragma comment(lib, "mfuuid.lib")
 
 /// <summary>
 /// 音声データ構造体
-/// WAVファイルのフォーマット情報と波形データを保持する
+/// フォーマット情報と、デコード済みの波形データを保持する
 /// </summary>
 struct SoundData{
-	WAVEFORMATEX wfex;      // 波形フォーマット
-	BYTE* pBuffer;          // 波形データのバッファ
-	unsigned int bufferSize;// バッファのサイズ
+	WAVEFORMATEX wfex;			// 波形フォーマット
+	std::vector<BYTE> pBuffer;	// 波形データのバッファ (自動メモリ管理)
+	unsigned int bufferSize;	// バッファのサイズ
 };
 
 /// <summary>
 /// サウンド管理クラス (シングルトン)
-/// WAVファイルのロード、再生、停止、一時停止などを管理する
+/// MP3/WAVファイルのロード、再生、停止、一時停止などを管理する
 /// </summary>
 class SoundManager{
 public: // --- シングルトンインスタンス取得 ---
@@ -30,31 +42,50 @@ public: // --- シングルトンインスタンス取得 ---
 
 public: // --- システム初期化・終了 ---
 
-	// 初期化 (XAudio2エンジンの生成など)
+	/// <summary>
+	/// 初期化 (XAudio2, MediaFoundationの起動)
+	/// </summary>
 	void Initialize();
 
-	// 終了処理 (読み込んだ音声データの解放など)
+	/// <summary>
+	/// 終了処理 (データの解放, エンジンの終了)
+	/// </summary>
 	void Finalize();
 
 public: // --- 音声ロード・再生制御 ---
 
-	// WAVファイルをロード (filenameをキーとして管理)
-	void LoadWave(const std::string& filename);
+	/// <summary>
+	/// 音声ファイルをロード (MP3, WAVなど)
+	/// </summary>
+	/// <param name="filename">ファイルパス (キーとして使用)</param>
+	void SoundLoadFile(const std::string& filename);
 
-	// 音声を再生
-	// volume: 0.0f(無音) ～ 1.0f(最大), loop: trueで無限ループ
-	void PlayWave(const std::string& filename,float volume = 1.0f,bool loop = false);
+	/// <summary>
+	/// 音声を再生
+	/// </summary>
+	/// <param name="filename">ファイルパス</param>
+	/// <param name="volume">音量 (0.0=無音, 1.0=最大)</param>
+	/// <param name="loop">trueで無限ループ</param>
+	void PlayAudio(const std::string& filename,float volume = 1.0f,bool loop = false);
 
-	// 音声を停止 (停止後は最初から再生になる)
-	void StopWave(const std::string& filename);
+	/// <summary>
+	/// 音声を停止 (停止後は最初から再生になる)
+	/// </summary>
+	void StopAudio(const std::string& filename);
 
-	// 一時停止 (再生位置を保持したまま止める)
-	void PauseWave(const std::string& filename);
+	/// <summary>
+	/// 一時停止 (再生位置を保持したまま止める)
+	/// </summary>
+	void PauseAudio(const std::string& filename);
 
-	// 再開 (一時停止した位置から再生する)
-	void ResumeWave(const std::string& filename);
+	/// <summary>
+	/// 再開 (一時停止した位置から再生する)
+	/// </summary>
+	void ResumeAudio(const std::string& filename);
 
-	// 再生中かどうかを確認
+	/// <summary>
+	/// 再生中かどうかを確認
+	/// </summary>
 	bool IsPlaying(const std::string& filename);
 
 private: // --- コンストラクタ・デストラクタ (外部からの生成禁止) ---
@@ -79,6 +110,5 @@ private: // --- メンバ変数 ---
 	std::map<std::string,SoundData> soundDatas_;
 
 	// 再生中のソースボイス管理コンテナ [キー:ファイル名]
-	// 停止や一時停止制御のためにインスタンスを保持しておく
 	std::map<std::string,IXAudio2SourceVoice*> activeVoices_;
 };
