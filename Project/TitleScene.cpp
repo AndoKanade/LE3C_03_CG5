@@ -1,6 +1,5 @@
 #include "TitleScene.h"
-#include "GameScene.h"     // 次のシーン
-#include "SceneManager.h"  // 切り替え用
+#include "SceneManager.h" 
 #include "ModelManager.h"
 #include "Input.h"
 
@@ -45,15 +44,9 @@ void TitleScene::Update(){
 
 	// シーン遷移処理 (スペースキー)
 	if(input_->TriggerKey(DIK_SPACE)){
-
-		// 1. 次のシーンを作る
-		BaseScene* nextScene = new GameScene();
-
-		// 2. 初期化 (データを引き継ぐ)
-		nextScene->Initialize(object3dCommon_,input_);
-
+	
 		// 3. マネージャーに切り替え依頼
-		sceneManager_->ChangeScene(nextScene);
+		SceneManager::GetInstance()->ChangeScene("GAME");
 	}
 }
 

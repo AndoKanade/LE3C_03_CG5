@@ -178,6 +178,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Obj3DCommon.cpp" />
     <ClCompile Include="ParticleEmitter.cpp" />
     <ClCompile Include="ParticleManager.cpp" />
+    <ClCompile Include="SceneFactory.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="Sprite.cpp" />
@@ -211,6 +212,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <None Include="resource\shader\Particle.hlsli" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AbstractSceneFactory.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="BaseScene.h" />
     <ClInclude Include="Camera.h" />
@@ -230,6 +232,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Obj3DCommon.h" />
     <ClInclude Include="ParticleEmitter.h" />
     <ClInclude Include="ParticleManager.h" />
+    <ClInclude Include="SceneFactory.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="SoundManager.h" />
     <ClInclude Include="Sprite.h" />

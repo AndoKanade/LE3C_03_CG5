@@ -14,6 +14,7 @@
 #include "SpriteCommon.h"
 #include "Obj3DCommon.h"
 #include "BaseScene.h"
+#include "AbstractSceneFactory.h"
 
 /// <summary>
 /// ゲームの土台となるクラス (エンジン部分)
@@ -54,4 +55,5 @@ protected: // 継承先(MyGame)でも使えるように protected にする
 	Obj3dCommon* object3dCommon_ = nullptr;
 
 	BaseScene* scene_ = nullptr;
+	AbstractSceneFactory* sceneFactory_ = nullptr;
 };

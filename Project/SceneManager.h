@@ -1,5 +1,11 @@
 #pragma once
 #include "BaseScene.h"
+#include "AbstractSceneFactory.h"
+#include <string>
+
+// --- 前方宣言 (インクルード循環防止・高速化) ---
+class Obj3dCommon;
+class Input;
 
 /// <summary>
 /// シーン管理クラス (シングルトン)
@@ -35,7 +41,23 @@ public:
 	void Draw();
 
 	// 次のシーンを予約する (実際の切り替えは次のUpdate冒頭)
-	void ChangeScene(BaseScene* nextScene);
+	void ChangeScene(const std::string& sceneName);
+
+	// -------------------------------------------------
+	// セッター (依存性の注入)
+	// -------------------------------------------------
+
+	// シーン生成工場をセット
+	void SetFactory(AbstractSceneFactory* factory){
+		sceneFactory_ = factory;
+	}
+
+	// 共通データ (Input等) をセット
+	// ※Application初期化時に必ず呼ぶこと
+	void SetCommonPtr(Obj3dCommon* common,Input* input){
+		object3dCommon_ = common;
+		input_ = input;
+	}
 
 private:
 	// -------------------------------------------------
@@ -45,9 +67,12 @@ private:
 	// シングルトンインスタンス
 	static SceneManager* instance_;
 
-	// 今実行しているシーン
-	BaseScene* scene_ = nullptr;
+	// --- シーン管理 ---
+	AbstractSceneFactory* sceneFactory_ = nullptr; // シーン工場
+	BaseScene* scene_ = nullptr;                   // 今実行しているシーン
+	std::string nextSceneName_ = "";               // 次に実行する予定のシーン名
 
-	// 次に実行する予定のシーン (予約用)
-	BaseScene* nextScene_ = nullptr;
+	// --- 共通データ (借りてくるもの) ---
+	Obj3dCommon* object3dCommon_ = nullptr;
+	Input* input_ = nullptr;
 };
