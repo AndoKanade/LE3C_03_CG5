@@ -1,117 +1,79 @@
 #include "Application.h"
+#include "TitleScene.h"
 
+// -------------------------------------------------
+// コンストラクタ・デストラクタ
+// -------------------------------------------------
 Application::Application(){}
 Application::~Application(){}
 
+// -------------------------------------------------
+// 初期化処理
+// -------------------------------------------------
 void Application::Initialize(){
-	// ★重要：まず親(Framework)の初期化を呼ぶ
+	// 1. 基盤(Framework)の初期化
 	Framework::Initialize();
 
-	// --- ここからはゲーム固有の処理 ---
+	// 2. シーンマネージャの取得
+	sceneManager_ = SceneManager::GetInstance();
 
-	// リソースロード
-	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
-	TextureManager::GetInstance()->LoadTexture("resource/monsterball.png");
-	TextureManager::GetInstance()->LoadTexture("resource/Circle.png");
-	ModelManager::GetInstance()->LoadModel("plane.obj");
-	ModelManager::GetInstance()->LoadModel("fence.obj");
-	ModelManager::GetInstance()->LoadModel("sphere.obj");
+	// 3. 最初のシーン(TitleScene)を生成
+	BaseScene* scene = new TitleScene();
 
-	ParticleManager::GetInstance()->CreateParticleGroup("Circle","resource/Circle.png");
-	SoundManager::GetInstance()->SoundLoadFile(kBgmPath_);
+	// ★重要：シーンの初期化 (データを渡す)
+	scene->Initialize(object3dCommon_,input_);
 
-	// オブジェクト生成
-	planeObj_ = new Obj3D();
-	planeObj_->Initialize(object3dCommon_);
-	planeObj_->SetModel("plane.obj");
-
-	fenceObj_ = new Obj3D();
-	fenceObj_->Initialize(object3dCommon_);
-	fenceObj_->SetModel("fence.obj");
-	fenceObj_->SetTranslate({2.0f, 0.0f, 0.0f});
-
-	// パーティクル
-	Transform emitterConfig;
-	emitterConfig.scale = {1.0f, 1.0f, 1.0f};
-	particleEmitter_ = new ParticleEmitter("Circle",emitterConfig,10,0.2f);
-
-	// カメラ
-	CameraManager::GetInstance()->CreateCamera("default");
-	auto* defaultCamera = CameraManager::GetInstance()->GetCamera("default");
-	defaultCamera->SetTranslate({0.0f, 0.0f, -10.0f});
-	CameraManager::GetInstance()->SetActiveCamera("default");
-
-	object3dCommon_->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
+	// 4. マネージャーにシーンをセット
+	sceneManager_->ChangeScene(scene);
 }
 
+// -------------------------------------------------
+// 更新処理
+// -------------------------------------------------
 void Application::Update(){
-	// ★親の更新処理を呼ぶ (入力更新などはここで行われる)
+	// 1. 基盤更新 (ImGuiManager::Begin などが含まれる)
 	Framework::Update();
 
-	// ゲーム固有の更新
-	planeObj_->Update();
+	// 2. シーンマネージャの更新 (シーン切り替えや現在のシーンのUpdate)
+	sceneManager_->Update();
 
-	// 入力処理 (input_ は親クラスにあるのでそのまま使える)
-	if(input_->TriggerKey(DIK_SPACE)){
-		if(!SoundManager::GetInstance()->IsPlaying(kBgmPath_)){
-			SoundManager::GetInstance()->PlayAudio(kBgmPath_,0.5f,true);
-		}
-	}
-
-	if(input_->TriggerKey(DIK_RETURN)){
-		SoundManager::GetInstance()->StopAudio(kBgmPath_);
-	}
-
+	// 3. ImGui 受付終了
 #ifdef _DEBUG
-	// 例：カメラの座標をいじるウィンドウ
-	Camera* activeCamera = CameraManager::GetInstance()->GetActiveCamera();
-	if(activeCamera){
-		// 1. ウィンドウを作る
-		ImGui::Begin("Camera Control");
-
-		// 2. カメラの今の座標を取ってくる
-		Vector3 translate = activeCamera->GetTranslate();
-
-		// 3. スライダーを表示して値をいじらせる
-		//    (ラベル名, 変数のアドレス, 感度)
-		ImGui::DragFloat3("Position",&translate.x,0.1f);
-
-		// 4. ウィンドウを閉じる
-		ImGui::End();
-
-		// いじった値をカメラにセットし直す
-		activeCamera->SetTranslate(translate);
-	}
-#endif
-
-#ifdef _DEBUG
-	ImGuiManager::GetInstance()->End(); // FrameworkでBeginしてるのでEndが必要
+	ImGuiManager::GetInstance()->End();
 #endif
 }
 
+// -------------------------------------------------
+// 描画処理
+// -------------------------------------------------
 void Application::Draw(){
-	// 描画開始
+	// 1. 描画前処理
 	dxCommon_->PreDraw();
 	SrvManager::GetInstance()->PreDraw();
 
-	// 描画コマンド
+	// 2. 3D描画共通設定 (ルートシグネチャの設定など)
 	object3dCommon_->Draw();
-	planeObj_->Draw();
 
+	// 3. 現在のシーンの描画
+	sceneManager_->Draw();
+
+	// 4. UI描画 (ImGui)
 #ifdef _DEBUG
 	ImGuiManager::GetInstance()->Draw();
 #endif
 
-	// 描画終了
+	// 5. 描画後処理
 	dxCommon_->PostDraw();
 }
 
+// -------------------------------------------------
+// 終了処理
+// -------------------------------------------------
 void Application::Finalize(){
-	// ゲーム固有の解放
-	delete particleEmitter_;
-	delete planeObj_;
-	delete fenceObj_;
+	// 1. シーンマネージャの解放
+	// (Frameworkより先に消さないと、リソース解放順序でエラーになる場合があるため)
+	SceneManager::Destroy();
 
-	// ★最後に親の終了処理を呼ぶ
+	// 2. 基盤の終了処理
 	Framework::Finalize();
 }
