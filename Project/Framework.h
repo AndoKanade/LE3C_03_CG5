@@ -13,6 +13,7 @@
 #include "ModelManager.h"
 #include "SpriteCommon.h"
 #include "Obj3DCommon.h"
+#include "BaseScene.h"
 
 /// <summary>
 /// ゲームの土台となるクラス (エンジン部分)
@@ -51,4 +52,6 @@ protected: // 継承先(MyGame)でも使えるように protected にする
 	// --- 描画共通 ---
 	SpriteCommon* spriteCommon_ = nullptr;
 	Obj3dCommon* object3dCommon_ = nullptr;
+
+	BaseScene* scene_ = nullptr;
 };

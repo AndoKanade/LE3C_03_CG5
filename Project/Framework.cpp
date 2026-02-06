@@ -47,6 +47,10 @@ void Framework::Update(){
 	ImGuiManager::GetInstance()->Begin();
 #endif
 
+	if(scene_){
+		scene_->Update();
+	}
+
 	CameraManager::GetInstance()->Update();
 }
 
@@ -54,6 +58,12 @@ void Framework::Finalize(){
 	// 共通部分の解放
 	delete spriteCommon_;
 	delete object3dCommon_;
+	if(scene_){
+		scene_->Finalize(); // シーンの終了処理
+		delete scene_;      // メモリ解放
+		scene_ = nullptr;
+	}
+
 
 #ifdef _DEBUG
 	ImGuiManager::GetInstance()->Finalize();
