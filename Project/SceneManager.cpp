@@ -1,6 +1,9 @@
 #include "SceneManager.h"
+#include <cassert>
 
-// --- 静的メンバ変数の実体定義 ---
+// -------------------------------------------------
+// 静的メンバ変数の実体定義
+// -------------------------------------------------
 SceneManager* SceneManager::instance_ = nullptr;
 
 // -------------------------------------------------
@@ -35,35 +38,44 @@ SceneManager::~SceneManager(){
 		delete scene_;
 		scene_ = nullptr;
 	}
-
-	// 予約中のシーンがあれば解放 (念のため)
-	if(nextScene_){
-		delete nextScene_;
-		nextScene_ = nullptr;
-	}
+	// ※ sceneFactory_ は Framework 側で管理・削除するため、ここでは delete しない
 }
 
 // -------------------------------------------------
 // メインループ
 // -------------------------------------------------
 
-// 更新
+// 更新処理
 void SceneManager::Update(){
-	// 次のシーン予約があるなら、切り替えを行う
-	if(nextScene_){
+	// 次のシーン予約があるなら (予約名が空でなければ) 切り替え実行
+	if(nextSceneName_ != ""){
+
 		// 1. 旧シーンの終了
 		if(scene_){
 			scene_->Finalize();
 			delete scene_;
+			scene_ = nullptr;
 		}
 
-		// 2. シーン切り替え
-		scene_ = nextScene_;
-		nextScene_ = nullptr;
+		// 2. ファクトリーを使って新しいシーンを生成
+		if(sceneFactory_){
+			scene_ = sceneFactory_->CreateScene(nextSceneName_);
+		}
 
-		// 3. 新しいシーンにマネージャー(自分)をセット
-		//    (これによりシーン内から ChangeScene が呼べるようになる)
-		scene_->SetSceneManager(this);
+		// 3. 新しいシーンの初期化と依存性の注入
+		if(scene_){
+			// マネージャをセット (シーン内から ChangeScene を呼べるようにする)
+			scene_->SetSceneManager(this);
+
+			// 共通データ (Obj3dCommon, Input) を渡して初期化
+			// これを行わないとシーン内でメンバ変数が nullptr になりクラッシュする
+			if(object3dCommon_ && input_){
+				scene_->Initialize(object3dCommon_,input_);
+			}
+		}
+
+		// 予約をクリア
+		nextSceneName_ = "";
 	}
 
 	// 現在のシーンを実行
@@ -72,7 +84,7 @@ void SceneManager::Update(){
 	}
 }
 
-// 描画
+// 描画処理
 void SceneManager::Draw(){
 	if(scene_){
 		scene_->Draw();
@@ -83,9 +95,11 @@ void SceneManager::Draw(){
 // シーン制御
 // -------------------------------------------------
 
-// 次のシーンを予約する
-void SceneManager::ChangeScene(BaseScene* nextScene){
-	// 即座に切り替えず、予約変数に入れる
-	// (実行中のUpdateが終わった後の、次のフレームの冒頭で切り替わる)
-	nextScene_ = nextScene;
+// シーン切り替え予約
+void SceneManager::ChangeScene(const std::string& sceneName){
+	// ファクトリーがセットされていなければエラー
+	assert(sceneFactory_);
+
+	// 次のシーン名を予約 (実際の生成・切り替えは Update の冒頭で行う)
+	nextSceneName_ = sceneName;
 }

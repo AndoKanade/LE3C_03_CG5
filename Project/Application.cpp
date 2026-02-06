@@ -1,5 +1,6 @@
 #include "Application.h"
-#include "TitleScene.h"
+#include "SceneManager.h"
+#include "SceneFactory.h"
 
 // -------------------------------------------------
 // コンストラクタ・デストラクタ
@@ -12,29 +13,33 @@ Application::~Application(){}
 // -------------------------------------------------
 void Application::Initialize(){
 	// 1. 基盤(Framework)の初期化
+	// (ここでWindow生成、DirectX初期化、Input生成などが行われる)
 	Framework::Initialize();
 
 	// 2. シーンマネージャの取得
 	sceneManager_ = SceneManager::GetInstance();
 
-	// 3. 最初のシーン(TitleScene)を生成
-	BaseScene* scene = new TitleScene();
+	// 3. 共通データの転送 (Dependency Injection)
+	// (シーンが生成されたときに渡す Input や Obj3dCommon をマネージャに預ける)
+	sceneManager_->SetCommonPtr(object3dCommon_,input_);
 
-	// ★重要：シーンの初期化 (データを渡す)
-	scene->Initialize(object3dCommon_,input_);
+	// 4. シーン工場の生成とセット
+	sceneFactory_ = new SceneFactory();
+	sceneManager_->SetFactory(sceneFactory_);
 
-	// 4. マネージャーにシーンをセット
-	sceneManager_->ChangeScene(scene);
+	// 5. 最初のシーンを開始
+	sceneManager_->ChangeScene("TITLE");
 }
 
 // -------------------------------------------------
 // 更新処理
 // -------------------------------------------------
 void Application::Update(){
-	// 1. 基盤更新 (ImGuiManager::Begin などが含まれる)
+	// 1. 基盤更新 (ImGuiManager::Begin など)
 	Framework::Update();
 
-	// 2. シーンマネージャの更新 (シーン切り替えや現在のシーンのUpdate)
+	// 2. シーンマネージャの更新
+	// (シーンの切り替え処理や、現在のシーンの Update が呼ばれる)
 	sceneManager_->Update();
 
 	// 3. ImGui 受付終了
@@ -47,11 +52,11 @@ void Application::Update(){
 // 描画処理
 // -------------------------------------------------
 void Application::Draw(){
-	// 1. 描画前処理
+	// 1. 描画前処理 (画面クリア等)
 	dxCommon_->PreDraw();
 	SrvManager::GetInstance()->PreDraw();
 
-	// 2. 3D描画共通設定 (ルートシグネチャの設定など)
+	// 2. 3D描画共通設定
 	object3dCommon_->Draw();
 
 	// 3. 現在のシーンの描画
@@ -62,7 +67,7 @@ void Application::Draw(){
 	ImGuiManager::GetInstance()->Draw();
 #endif
 
-	// 5. 描画後処理
+	// 5. 描画後処理 (フリップ等)
 	dxCommon_->PostDraw();
 }
 
@@ -70,10 +75,16 @@ void Application::Draw(){
 // 終了処理
 // -------------------------------------------------
 void Application::Finalize(){
-	// 1. シーンマネージャの解放
-	// (Frameworkより先に消さないと、リソース解放順序でエラーになる場合があるため)
+	// 1. シーン工場の解放
+	if(sceneFactory_){
+		delete sceneFactory_;
+		sceneFactory_ = nullptr;
+	}
+
+	// 2. シーンマネージャの解放
+	// (内部で現在のシーンの終了処理なども行われる)
 	SceneManager::Destroy();
 
-	// 2. 基盤の終了処理
+	// 3. 基盤の終了処理
 	Framework::Finalize();
 }
