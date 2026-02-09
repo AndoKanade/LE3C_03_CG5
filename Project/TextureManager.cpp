@@ -1,23 +1,36 @@
 #include "TextureManager.h"
 #include "DXCommon.h"
 #include "StringUtility.h"
-#include"SrvManager.h"
+#include "SrvManager.h"
 #include <algorithm>
+#include <memory> 
 
+// 静的メンバ変数の初期化
 uint32_t TextureManager::kSRVIndexTop = 1;
-TextureManager* TextureManager::instance = nullptr;
-TextureManager* TextureManager::GetInstance(){
-	if(instance == nullptr){
-		instance = new TextureManager;
-	}
 
-	return instance;
+// ★削除: ポインタ変数の定義は不要です
+// TextureManager* TextureManager::instance = nullptr;
+
+TextureManager* TextureManager::GetInstance(){
+	// ★変更: staticローカル変数を使う (Meyers Singleton)
+	// 最初の1回だけ生成され、アプリ終了時に自動で破棄されます。
+	// これにより new も delete も不要になります！
+	static TextureManager instance;
+	return &instance;
 }
 
-void TextureManager::Finalize(){
-	delete instance;
-	instance = nullptr;
+// ★変更: Destroyはもう何もしなくてOKです
+void TextureManager::Destroy(){
+	// delete instance;  <-- ★削除 (絶対にやってはいけない)
 
+	// static変数はプログラム終了時に自動で消えるので、ここは空でOKです。
+	// (Framework::Finalize から呼んでも安全なように、空の関数として残しておきます)
+}
+
+// 終了処理 (リソースのクリア)
+void TextureManager::Finalize(){
+	// 中身の unique_ptr たちはここでリセットして、VRAMなどを解放しておく
+	textureDatas_.clear();
 }
 
 void TextureManager::Initialize(DXCommon* dxCommon,SrvManager* srvManager){
@@ -29,7 +42,6 @@ void TextureManager::Initialize(DXCommon* dxCommon,SrvManager* srvManager){
 void TextureManager::LoadTexture(const std::string& filePath){
 
 	// 読み込み済みなら早期リターン
-	// (C++20なら contains が使えますが、汎用的に find を使っています)
 	if(textureDatas_.contains(filePath)){
 		return;
 	}
@@ -49,42 +61,39 @@ void TextureManager::LoadTexture(const std::string& filePath){
 	assert(SUCCEEDED(hr));
 	// -----------------------
 
-	// 【変更点1】マップのキーを指定して参照を取得（ここで要素が追加されます）
-	TextureData& textureData = textureDatas_[filePath];
+	// unique_ptr を生成
+	auto textureData = std::make_unique<TextureData>();
 
 	// データを書き込む
-	textureData.metadata = mipImages.GetMetadata();
-	textureData.resource = dxCommon_->CreateTextureResource(textureData.metadata);
-	textureData.intermediateResource = dxCommon_->UploadTextureData(textureData.resource,mipImages);
+	textureData->metadata = mipImages.GetMetadata();
+	textureData->resource = dxCommon_->CreateTextureResource(textureData->metadata);
+	textureData->intermediateResource = dxCommon_->UploadTextureData(textureData->resource,mipImages);
 
-	// 【変更点2】SRVマネージャからインデックスを割り当ててもらう (Allocate)
-	// 以前のような計算 (size + offset) は不要になります
-	textureData.srvIndex = srvManager_->Allocate();
+	// SRVインデックス割り当て
+	textureData->srvIndex = srvManager_->Allocate();
 
-	// 【変更点3】割り当てられたインデックスを使ってハンドルを取得
-	textureData.srvHandleCPU = srvManager_->GetCPUDescriptorHandle(textureData.srvIndex);
-	textureData.srvHandleGPU = srvManager_->GetGPUDescriptorHandle(textureData.srvIndex);
+	// ハンドル取得
+	textureData->srvHandleCPU = srvManager_->GetCPUDescriptorHandle(textureData->srvIndex);
+	textureData->srvHandleGPU = srvManager_->GetGPUDescriptorHandle(textureData->srvIndex);
 
-	// SRV生成 (前回作成した関数を使用)
+	// SRV生成
 	srvManager_->CreateSRVTexture2D(
-		textureData.srvIndex,
-		textureData.resource.Get(),
-		textureData.metadata.format,
-		UINT(textureData.metadata.mipLevels)
+		textureData->srvIndex,
+		textureData->resource.Get(),
+		textureData->metadata.format,
+		UINT(textureData->metadata.mipLevels)
 	);
+
+	// マップに所有権を移動
+	textureDatas_[filePath] = std::move(textureData);
 }
 
 // 1. メタデータの取得
 const DirectX::TexMetadata& TextureManager::GetMetaData(const std::string& filePath){
-	// マップから検索
 	auto it = textureDatas_.find(filePath);
-
-	// 見つかった場合
 	if(it != textureDatas_.end()){
-		return it->second.metadata;
+		return it->second->metadata;
 	}
-
-	// 見つからなかった場合のエラー処理
 	assert(0 && "Texture not found.");
 	static DirectX::TexMetadata defaultMetadata{};
 	return defaultMetadata;
@@ -92,30 +101,20 @@ const DirectX::TexMetadata& TextureManager::GetMetaData(const std::string& fileP
 
 // 2. SRVインデックスの取得
 uint32_t TextureManager::GetSrvIndex(const std::string& filePath){
-	// マップから検索
 	auto it = textureDatas_.find(filePath);
-
-	// 見つかった場合
 	if(it != textureDatas_.end()){
-		return it->second.srvIndex;
+		return it->second->srvIndex;
 	}
-
-	// 見つからなかった場合のエラー処理
 	assert(0 && "Texture not found.");
 	return 0;
 }
 
 // 3. GPUハンドルの取得
 D3D12_GPU_DESCRIPTOR_HANDLE TextureManager::GetSrvHandleGPU(const std::string& filePath){
-	// マップから検索
 	auto it = textureDatas_.find(filePath);
-
-	// 見つかった場合
 	if(it != textureDatas_.end()){
-		return it->second.srvHandleGPU;
+		return it->second->srvHandleGPU;
 	}
-
-	// 見つからなかった場合のエラー処理
 	assert(0 && "Texture not found.");
 	return D3D12_GPU_DESCRIPTOR_HANDLE{};
 }

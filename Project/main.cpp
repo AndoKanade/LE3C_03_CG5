@@ -1,9 +1,10 @@
 #include "Application.h"
 #include "D3DResourceLeakChecker.h"
+#include <memory> 
 
 int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int){
 	D3DResourceLeakChecker leakCheck;
-	Framework* game = new Application();
+	std::unique_ptr<Framework> game = std::make_unique<Application>();
 
 	// 初期化
 	game->Initialize();
@@ -22,6 +23,5 @@ int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int){
 	// 終了処理
 	game->Finalize();
 
-	delete game;
 	return 0;
 }

@@ -1,37 +1,48 @@
 #include "Framework.h"
 #include "Logger.h"
+#include "SceneManager.h" // シーンの更新・描画をここに任せるため
+
+// unique_ptr用
+#include <memory>
 
 void Framework::Initialize(){
 	// ダンプ設定
 	SetUnhandledExceptionFilter(Logger::ExportDump);
 
 	// 1. 基盤初期化
-	winApi_ = new WinAPI();
+	// make_unique で生成
+	winApi_ = std::make_unique<WinAPI>();
 	winApi_->Initialize();
 
-	dxCommon_ = new DXCommon();
-	dxCommon_->Initialize(winApi_);
+	dxCommon_ = std::make_unique<DXCommon>();
+	// 他のクラスが生ポインタを欲しがる場合は .get() で渡す
+	dxCommon_->Initialize(winApi_.get());
 
-	input_ = new Input();
-	input_->Initialize(winApi_);
+	input_ = std::make_unique<Input>();
+	input_->Initialize(winApi_.get());
 
 	// 2. マネージャ初期化
-	SrvManager::GetInstance()->Initialize(dxCommon_);
+	SrvManager::GetInstance()->Initialize(dxCommon_.get());
 
 #ifdef _DEBUG
-	ImGuiManager::GetInstance()->Initialize(winApi_,dxCommon_);
+	ImGuiManager::GetInstance()->Initialize(winApi_.get(),dxCommon_.get());
 #endif
 
 	SoundManager::GetInstance()->Initialize();
-	TextureManager::GetInstance()->Initialize(dxCommon_,SrvManager::GetInstance());
-	ModelManager::GetInstance()->Initialize(dxCommon_);
+
+	// .get() を使って渡す
+	TextureManager::GetInstance()->Initialize(dxCommon_.get(),SrvManager::GetInstance());
+	ModelManager::GetInstance()->Initialize(dxCommon_.get());
 	CameraManager::GetInstance()->Initialize();
-	ParticleManager::GetInstance()->Initialize(dxCommon_,SrvManager::GetInstance());
+	ParticleManager::GetInstance()->Initialize(dxCommon_.get(),SrvManager::GetInstance());
 
 	// 3. 描画共通初期化
-	spriteCommon_ = new SpriteCommon();
-	object3dCommon_ = new Obj3dCommon();
-	object3dCommon_->Initialize(dxCommon_);
+	// SpriteCommonの初期化を忘れずに！
+	spriteCommon_ = std::make_unique<SpriteCommon>();
+	spriteCommon_->Initialize(dxCommon_.get());
+
+	object3dCommon_ = std::make_unique<Obj3dCommon>();
+	object3dCommon_->Initialize(dxCommon_.get());
 }
 
 void Framework::Update(){
@@ -43,28 +54,27 @@ void Framework::Update(){
 	// 入力等の更新
 	input_->Update();
 
+	// ★順番変更: ImGuiのフレーム開始処理を先に実行！
+	// これを先にやらないと、シーンの中で ImGui::Begin() を呼んだ時に落ちます
 #ifdef _DEBUG
 	ImGuiManager::GetInstance()->Begin();
 #endif
 
-	if(scene_){
-		scene_->Update();
-	}
+	// ★ここに移動: ImGuiの準備ができてからシーンを更新
+	SceneManager::GetInstance()->Update();
+#ifdef _DEBUG
+	ImGuiManager::GetInstance()->End();
+#endif
 
+	// カメラの更新
 	CameraManager::GetInstance()->Update();
 }
 
 void Framework::Finalize(){
-	// 共通部分の解放
-	delete spriteCommon_;
-	delete object3dCommon_;
-	if(scene_){
-		scene_->Finalize(); // シーンの終了処理
-		delete scene_;      // メモリ解放
-		scene_ = nullptr;
-	}
+	// unique_ptr が自動で解放してくれるので delete は不要
 
-
+	// シーンマネージャの終了処理
+	SceneManager::GetInstance()->Finalize();
 #ifdef _DEBUG
 	ImGuiManager::GetInstance()->Finalize();
 #endif
@@ -75,9 +85,5 @@ void Framework::Finalize(){
 	CameraManager::GetInstance()->Finalize();
 	SrvManager::GetInstance()->Finalize();
 
-	delete input_;
-	delete dxCommon_;
-	delete winApi_;
+	// input_, dxCommon_, winApi_ も自動で消えるので delete 不要
 }
-
-// Drawは純粋仮想関数のため、ここには定義不要

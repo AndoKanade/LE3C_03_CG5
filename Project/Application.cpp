@@ -1,77 +1,82 @@
 #include "Application.h"
 #include "SceneManager.h"
-#include "SceneFactory.h"
+#include "SceneFactory.h" // ★追加: make_unique<SceneFactory>のため
 
 // -------------------------------------------------
 // コンストラクタ・デストラクタ
 // -------------------------------------------------
-Application::Application(){}
-Application::~Application(){}
+Application::Application() = default;
+Application::~Application() = default;
 
 // -------------------------------------------------
 // 初期化処理
 // -------------------------------------------------
 void Application::Initialize(){
 	// 1. 基盤(Framework)の初期化
-	// (ここでWindow生成、DirectX初期化、Input生成などが行われる)
+	// ★これで WinAPI, DXCommon, Input, SpriteCommon などが
+	//   すべて make_unique され、準備完了になります。
 	Framework::Initialize();
 
-	spriteCommon_ = new SpriteCommon();
-	spriteCommon_->Initialize(dxCommon_); // 例
+	// ★削除: spriteCommon_ = 
+	// SpriteCommon(); 
+	// (Framework::Initialize 内ですでに生成されているため、ここで new するとメモリリークします！)
 
 
-	// 2. シーンマネージャの取得
-	sceneManager_ = SceneManager::GetInstance();
+	// 2. シーン工場の生成とセット
+	// Framework が持っている unique_ptr に、具体的な工場(SceneFactory)を入れます
+	sceneFactory_ = std::make_unique<SceneFactory>();
 
-	// 3. 共通データの転送 (Dependency Injection)
-	// (シーンが生成されたときに渡す Input や Obj3dCommon をマネージャに預ける)
-	sceneManager_->SetCommonPtr(object3dCommon_,input_,spriteCommon_);
 
-	// 4. シーン工場の生成とセット
-	sceneFactory_ = new SceneFactory();
-	sceneManager_->SetFactory(sceneFactory_);
+	// 3. シーンマネージャのセットアップ
+	SceneManager* sceneManager = SceneManager::GetInstance();
 
-	// 5. 最初のシーンを開始
-	sceneManager_->ChangeScene("TITLE");
+	// 工場を渡す (.get() で unique_ptr から生ポインタを取り出す)
+	sceneManager->SetFactory(sceneFactory_.get());
+
+	// 共通データを渡す (Framework が持っている unique_ptr から .get() する)
+	sceneManager->SetCommonPtr(object3dCommon_.get(),input_.get(),spriteCommon_.get());
+
+
+	// 4. 最初のシーンを開始
+	sceneManager->ChangeScene("TITLE");
 }
 
 // -------------------------------------------------
 // 更新処理
 // -------------------------------------------------
 void Application::Update(){
-	// 1. 基盤更新 (ImGuiManager::Begin など)
+	// 1. 基盤更新
+	// (この中で Windowメッセージ処理、Input更新、SceneManager::Update が行われます)
 	Framework::Update();
 
-	// 2. シーンマネージャの更新
-	// (シーンの切り替え処理や、現在のシーンの Update が呼ばれる)
-	sceneManager_->Update();
+	// ★削除: sceneManager_->Update();
+	// (Framework::Update 内で呼ばれるようになったので、ここで呼ぶと2回更新されてしまいます)
 
-	// 3. ImGui 受付終了
-#ifdef _DEBUG
-	ImGuiManager::GetInstance()->End();
-#endif
+	// ImGuiの終了処理などは Framework や Draw で完結させるのが一般的です
 }
 
 // -------------------------------------------------
 // 描画処理
 // -------------------------------------------------
 void Application::Draw(){
-	// 1. 描画前処理 (画面クリア等)
+	// 1. 描画前処理
 	dxCommon_->PreDraw();
 	SrvManager::GetInstance()->PreDraw();
 
-	// 2. 3D描画共通設定
-	object3dCommon_->Draw();
+	// ★★★ ここが抜けています！ ★★★
+	// 3Dオブジェクトを描画する前に、共通の「ルートシグネチャ」と「パイプライン」をセットする必要があります。
+	// Obj3dCommon にそのような関数があるはずです。（名前は実装によりますが、恐らく Draw か CommonDraw です）
+	object3dCommon_->Draw();  // ← これを追加！(関数名は Obj3dCommon.h を確認してください)
 
-	// 3. 現在のシーンの描画
-	sceneManager_->Draw();
+	// 2. シーンの描画
+	SceneManager::GetInstance()->Draw();
 
-	// 4. UI描画 (ImGui)
+	// 3. UI描画 (ImGui)
 #ifdef _DEBUG
 	ImGuiManager::GetInstance()->Draw();
 #endif
 
-	// 5. 描画後処理 (フリップ等)
+	// 4. 描画後処理
 	dxCommon_->PostDraw();
 }
 
@@ -79,18 +84,13 @@ void Application::Draw(){
 // 終了処理
 // -------------------------------------------------
 void Application::Finalize(){
-	// 1. シーン工場の解放
-	if(sceneFactory_){
-		delete sceneFactory_;
-		sceneFactory_ = nullptr;
-	}
+	// ★変更: delete はすべて削除！
+	// sceneFactory_, spriteCommon_ などは Framework のデストラクタで
+	// unique_ptr が自動的にメモリ解放してくれます。
 
-	if(spriteCommon_) delete spriteCommon_;
-
-	// 2. シーンマネージャの解放
-	// (内部で現在のシーンの終了処理なども行われる)
-	SceneManager::Destroy();
-
-	// 3. 基盤の終了処理
+	// 1. 基盤の終了処理
 	Framework::Finalize();
+
+	// (SceneManager::Destroy も Framework::Finalize 内で呼ぶように修正済なら削除OKですが、
+	//  念のためここで呼んでも安全です)
 }

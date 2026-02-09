@@ -5,9 +5,11 @@
 #include <list>
 #include <random>
 #include <map>
+#include <unordered_map> // unordered_map用に明示
 #include <string>
 #include <wrl.h>
 #include <d3d12.h>
+#include <memory> // ★追加: unique_ptr用
 
 // 既存の構造体
 struct Particle{
@@ -24,7 +26,7 @@ struct ParticleForGPU{
     Vector4 color;
 };
 
-// ■ 追加: パーティクルグループ構造体
+// パーティクルグループ構造体
 class Camera;
 struct ParticleGroup{
     // マテリアルデータ
@@ -38,7 +40,7 @@ struct ParticleGroup{
     uint32_t instancingSrvIndex;
     Microsoft::WRL::ComPtr<ID3D12Resource> instancingResource;
     const uint32_t kNumMaxInstance = 1000; // グループごとの最大数
-    ParticleForGPU* instancingData = nullptr;
+    ParticleForGPU* instancingData = nullptr; // マップ済みポインタ(解放不要)
     uint32_t numInstance = 0;
 };
 
@@ -46,24 +48,25 @@ class ParticleManager{
 public: // --- シングルトン ---
     static ParticleManager* GetInstance();
 
+    // ★変更: staticを外す
     void Finalize();
 
-private:
+    // コピー禁止
+    ParticleManager(const ParticleManager&) = delete;
+    ParticleManager& operator=(const ParticleManager&) = delete;
 
-    static ParticleManager* instance;
+private:
+    // ★削除: static ParticleManager* instance; は不要
 
     ParticleManager() = default;
     ~ParticleManager() = default;
-    ParticleManager(const ParticleManager&) = delete;
-    ParticleManager& operator=(const ParticleManager&) = delete;
 
 public: // --- メンバ関数 ---
 
     // 初期化（共有リソースの生成のみを行う）
     void Initialize(DXCommon* dxCommon,SrvManager* srvManager);
 
-    // ■ 追加: パーティクルグループの生成
-    // テクスチャごとにグループを作る必要があるので、この関数を呼び出してグループを追加します
+    // パーティクルグループの生成
     void CreateParticleGroup(const std::string& name,const std::string& textureFilePath);
 
     // 更新
@@ -73,10 +76,7 @@ public: // --- メンバ関数 ---
     void Draw(const Matrix4x4& viewProjectionMatrix);
 
     // パーティクル発生 (エミット)
-    // どのグループ(name)から出すかを指定する必要があります
     void Emit(const std::string& name,const Vector3& position,uint32_t count);
-
-
 
 private: // --- メンバ変数 ---
 
@@ -85,13 +85,15 @@ private: // --- メンバ変数 ---
 
     std::mt19937 randomEngine_;
 
-    // ■ 変更: リスト単体ではなく、グループのマップで管理する
-    // キーはグループ名（またはテクスチャ名）
-    std::unordered_map<std::string,ParticleGroup> particleGroups_;
+    // ★変更: std::unique_ptr で管理する
+    // これにより、グループのコピーが発生せず、メモリ管理が自動化されます
+    std::unordered_map<std::string,std::unique_ptr<ParticleGroup>> particleGroups_;
 
     // --- 共有リソース (全グループ共通) ---
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature_;
     Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineState_;
+    // vertexResource_ は VertexBuffer を作るための一時的なものならメンバ変数でなくても良いですが、
+    // ここではそのままにしておきます。
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView_{};
 
@@ -99,15 +101,13 @@ private: // --- メンバ変数 ---
 
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffer_;
 
-    // 頂点データの構造体 (もし定義してなければ)
+    // 頂点データの構造体
     struct VertexData{
         Vector4 position;
         Vector2 texcoord;
         Vector3 normal;
-    };   
-    
+    };
+
     void CreateGraphicsPipeline();
     void CreateModel();
-
-
 };

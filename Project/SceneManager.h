@@ -2,26 +2,24 @@
 #include "BaseScene.h"
 #include "AbstractSceneFactory.h"
 #include <string>
+#include <memory> 
 
-// --- 前方宣言 (インクルード循環防止・高速化) ---
+// --- 前方宣言 ---
 class Obj3dCommon;
 class SpriteCommon;
 class Input;
 
 /// <summary>
 /// シーン管理クラス (シングルトン)
-/// アプリケーション全体のシーン遷移と実行を管理する
 /// </summary>
 class SceneManager{
 private:
-	// -------------------------------------------------
-	// シングルトン化: コンストラクタ等を隠蔽
-	// -------------------------------------------------
+	// コンストラクタ隠蔽
 	SceneManager() = default;
-	~SceneManager();
+	~SceneManager() = default;
 
 public:
-	// コピーコンストラクタと代入演算子を無効にする (コピー禁止)
+	// コピー禁止
 	SceneManager(const SceneManager&) = delete;
 	SceneManager& operator=(const SceneManager&) = delete;
 
@@ -29,32 +27,28 @@ public:
 	// 公開メンバ関数
 	// -------------------------------------------------
 
-	// インスタンス取得
+	// インスタンス取得 (Meyers Singleton)
 	static SceneManager* GetInstance();
 
-	// 終了時にインスタンスを破棄する (Application::Finalize で呼ぶ)
-	static void Destroy();
+	// ★変更: static Destroy() を廃止し、リソース解放用のメンバ関数にする
+	void Finalize();
 
-	// 更新 (現在のシーンのUpdateを呼ぶ & シーン切り替え処理)
+	// 更新
 	void Update();
 
-	// 描画 (現在のシーンのDrawを呼ぶ)
+	// 描画
 	void Draw();
 
-	// 次のシーンを予約する (実際の切り替えは次のUpdate冒頭)
+	// 次のシーン予約
 	void ChangeScene(const std::string& sceneName);
 
 	// -------------------------------------------------
-	// セッター (依存性の注入)
+	// セッター
 	// -------------------------------------------------
-
-	// シーン生成工場をセット
 	void SetFactory(AbstractSceneFactory* factory){
 		sceneFactory_ = factory;
 	}
 
-	// 共通データ (Input等) をセット
-	// ※Application初期化時に必ず呼ぶこと
 	void SetCommonPtr(Obj3dCommon* common,Input* input,SpriteCommon* spriteCommon){
 		object3dCommon_ = common;
 		input_ = input;
@@ -66,15 +60,17 @@ private:
 	// メンバ変数
 	// -------------------------------------------------
 
-	// シングルトンインスタンス
-	static SceneManager* instance_;
+	// ★削除: static SceneManager* instance_; は不要になりました
 
-	// --- シーン管理 ---
-	AbstractSceneFactory* sceneFactory_ = nullptr; // シーン工場
-	BaseScene* scene_ = nullptr;                   // 今実行しているシーン
-	std::string nextSceneName_ = "";               // 次に実行する予定のシーン名
+	// シーン管理
+	AbstractSceneFactory* sceneFactory_ = nullptr;
 
-	// --- 共通データ (借りてくるもの) ---
+	// 現在のシーン (unique_ptr なので自動解放されます)
+	std::unique_ptr<BaseScene> scene_;
+
+	std::string nextSceneName_ = "";
+
+	// 共通データ
 	Obj3dCommon* object3dCommon_ = nullptr;
 	SpriteCommon* spriteCommon_ = nullptr;
 	Input* input_ = nullptr;

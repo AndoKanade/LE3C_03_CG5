@@ -1,45 +1,45 @@
 #include "ModelManager.h"
+#include "DXCommon.h" // Initializeで使うため必要ならインクルード
+#include "ModelCommon.h" // ★追加: ModelCommonの実体が必要
 
-// staticメンバ変数の初期化
-ModelManager* ModelManager::instance = nullptr;
+// ★削除: staticメンバ変数の初期化は不要
+// ModelManager* ModelManager::instance = nullptr;
 
 ModelManager* ModelManager::GetInstance(){
-	// インスタンスがなければ生成する
-	if(instance == nullptr){
-		instance = new ModelManager();
-	}
-	return instance;
+	// ★変更: Meyers Singleton (staticローカル変数)
+	// これで new も delete も不要になります。
+	static ModelManager instance;
+	return &instance;
 }
 
 void ModelManager::Finalize(){
-	if(instance != nullptr){
-		// ModelCommonの解放
-		if(instance->modelCommon != nullptr){
-			delete instance->modelCommon;
-			instance->modelCommon = nullptr;
-		}
+	// ★変更: インスタンスの削除は自動で行われるので不要です。
+	// ここでは保持しているモデルデータをクリアするだけでOK。
+	models.clear();
 
-		// インスタンス自体の解放
-		delete instance;
-		instance = nullptr;
-	}
+	// modelCommon も unique_ptr なので、
+	// ModelManager が死ぬときに勝手に道連れで消えてくれます。
 }
 
 void ModelManager::Initialize(DXCommon* dxCommon){
-	// モデル共通部の初期化
-	modelCommon = new ModelCommon();
+	// ★変更: make_unique で生成
+	modelCommon = std::make_unique<ModelCommon>();
 	modelCommon->Initialize(dxCommon);
 }
 
 void ModelManager::LoadModel(const std::string& filePath){
 	// 読み込み済みなら何もしない
+	// (C++20なら contains が使えますが、なければ find != end で代用)
 	if(models.contains(filePath)){
 		return;
 	}
 
 	// モデルの生成と初期化
+	// (ここですでに make_unique を使えているのは素晴らしいです！)
 	std::unique_ptr<Model> model = std::make_unique<Model>();
-	model->Initialize(modelCommon,"resource",filePath);
+
+	// modelCommon は unique_ptr なので .get() で生ポインタを渡す
+	model->Initialize(modelCommon.get(),"resource",filePath);
 
 	// マップに登録（所有権を移動）
 	models.insert(std::make_pair(filePath,std::move(model)));

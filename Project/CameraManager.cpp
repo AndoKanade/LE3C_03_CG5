@@ -1,20 +1,20 @@
 #include "CameraManager.h"
 
-// staticメンバ変数の初期化
-CameraManager* CameraManager::instance = nullptr;
+// ★削除: static変数の初期化は不要
+// CameraManager* CameraManager::instance = nullptr;
 
 CameraManager* CameraManager::GetInstance(){
-	if(instance == nullptr){
-		instance = new CameraManager();
-	}
-	return instance;
+	// ★変更: Meyers Singleton (staticローカル変数)
+	// アプリ終了時に自動で破棄されるため、newもdeleteも不要
+	static CameraManager instance;
+	return &instance;
 }
 
 void CameraManager::Finalize(){
-	if(instance != nullptr){
-		delete instance;
-		instance = nullptr;
-	}
+	// ★変更: インスタンス自体の delete はしない。
+	// 代わりに保持しているカメラをクリアして、参照を切る。
+	cameras.clear();
+	activeCamera = nullptr;
 }
 
 void CameraManager::Initialize(){
@@ -32,18 +32,21 @@ void CameraManager::Update(){
 
 void CameraManager::CreateCamera(const std::string& name){
 	// すでに同じ名前があれば何もしない
+	// (C++20なら contains が使えますが、なければ find != end で代用)
 	if(cameras.contains(name)){
 		return;
 	}
 
 	// 新しいカメラを生成
+	// (ここですでに make_unique を使えているのは完璧です！)
 	std::unique_ptr<Camera> newCamera = std::make_unique<Camera>();
 
-	// マップに登録
+	// マップに登録 (moveを使って所有権を移動)
 	cameras.insert(std::make_pair(name,std::move(newCamera)));
 
 	// もしアクティブカメラがまだ設定されていなければ、これをアクティブにする
 	if(activeCamera == nullptr){
+		// get() で生ポインタを取得してセット
 		activeCamera = cameras[name].get();
 	}
 }

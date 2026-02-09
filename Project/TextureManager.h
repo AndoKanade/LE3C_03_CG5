@@ -5,6 +5,7 @@
 #include <DirectXTex.h>
 #include <wrl.h>
 #include <d3d12.h>
+#include <memory> // ★追加: unique_ptr用
 
 class DXCommon;
 class SrvManager;
@@ -12,7 +13,7 @@ class SrvManager;
 class TextureManager{
 private: // ▼ 自分だけが知っていればいい情報
 
-	// シングルトン管理用（勝手にnewされないように）
+	// シングルトン管理用
 	static TextureManager* instance;
 	TextureManager() = default;
 	~TextureManager() = default;
@@ -20,7 +21,6 @@ private: // ▼ 自分だけが知っていればいい情報
 	TextureManager& operator=(TextureManager&) = delete;
 
 	// テクスチャ1枚分のデータ構造体
-	// (外部で struct TextureData を直接作らないなら private でOK)
 	struct TextureData{
 		std::string filePath;
 		DirectX::TexMetadata metadata;
@@ -32,8 +32,8 @@ private: // ▼ 自分だけが知っていればいい情報
 	};
 
 	// テクスチャデータ一覧
-	// (メンバ変数には「_」をつけるルールに統一すると見やすいです)
-	std::unordered_map<std::string,TextureData> textureDatas_;
+	// ★変更: 中身を unique_ptr にすることで、マップのリサイズ時に重いコピーが発生しなくなります
+	std::unordered_map<std::string,std::unique_ptr<TextureData>> textureDatas_;
 
 	static uint32_t kSRVIndexTop;
 
@@ -42,13 +42,13 @@ private: // ▼ 自分だけが知っていればいい情報
 	// SrvManagerのポインタ
 	SrvManager* srvManager_ = nullptr;
 
-	// ※さっきのコードにあった map は一旦消しました。
-	//   vectorで管理するコードを書いたので、vectorだけで十分です。
-
-public: // ▼ 外部（MainやSprite）から呼び出したい機能
+public: // ▼ 外部から呼び出したい機能
 
 	// シングルトン取得
 	static TextureManager* GetInstance();
+
+	// ★追加: シングルトン破棄 (Framework::Finalize で呼ぶ)
+	static void Destroy();
 
 	// 初期化・終了
 	void Initialize(DXCommon* dxCommon,SrvManager* srvManager);
@@ -57,14 +57,11 @@ public: // ▼ 外部（MainやSprite）から呼び出したい機能
 	// テクスチャ読み込み
 	void LoadTexture(const std::string& filePath);
 
-	// ★追加: テクスチャのGPUハンドルを取得する関数
-	// (これがないと、Spriteクラスが「どの画像を描画するか」を設定できません)
+	// テクスチャのGPUハンドルを取得
 	D3D12_GPU_DESCRIPTOR_HANDLE GetSrvHandleGPU(const std::string& filePath);
 
 	uint32_t GetSrvIndex(const std::string& filePath);
 
-
-	// ★追加: テクスチャのメタデータ（サイズなど）を取得する関数
-	// (スプライトのサイズを画像のサイズに合わせたい時などに使います)
+	// メタデータ取得
 	const DirectX::TexMetadata& GetMetaData(const std::string& filePath);
 };

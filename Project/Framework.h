@@ -16,13 +16,16 @@
 #include "BaseScene.h"
 #include "AbstractSceneFactory.h"
 
+// ★追加: unique_ptr用
+#include <memory>
+
 /// <summary>
 /// ゲームの土台となるクラス (エンジン部分)
 /// </summary>
 class Framework{
 public: // --- 仮想関数 ---
 
-	// 仮想デストラクタ (資料通り default で定義)
+	// 仮想デストラクタ (default で定義)
 	virtual ~Framework() = default;
 
 	// 初期化
@@ -45,15 +48,22 @@ protected: // 継承先(MyGame)でも使えるように protected にする
 	// 終了フラグ
 	bool endRequest_ = false;
 
-	// --- 基盤システム ---
-	WinAPI* winApi_ = nullptr;
-	DXCommon* dxCommon_ = nullptr;
-	Input* input_ = nullptr;
+	// --- 基盤システム (Frameworkが所有権を持つ) ---
+	// ★変更: 生ポインタから unique_ptr に変更
+	std::unique_ptr<WinAPI> winApi_;
+	std::unique_ptr<DXCommon> dxCommon_;
+	std::unique_ptr<Input> input_;
 
-	// --- 描画共通 ---
-	SpriteCommon* spriteCommon_ = nullptr;
-	Obj3dCommon* object3dCommon_ = nullptr;
+	// --- 描画共通 (Frameworkが所有権を持つ) ---
+	// ★変更: 生ポインタから unique_ptr に変更
+	std::unique_ptr<SpriteCommon> spriteCommon_;
+	std::unique_ptr<Obj3dCommon> object3dCommon_;
 
-	BaseScene* scene_ = nullptr;
-	AbstractSceneFactory* sceneFactory_ = nullptr;
+	// --- シーン関連 ---
+	// ★変更: 工場も Framework が所有して管理する
+	std::unique_ptr<AbstractSceneFactory> sceneFactory_;
+
+	// ※ BaseScene* scene_; は削除しました！
+	// 理由は、SceneManager が unique_ptr でシーンを管理するようになったため、
+	// Framework 側で二重管理する必要がなくなったからです。
 };

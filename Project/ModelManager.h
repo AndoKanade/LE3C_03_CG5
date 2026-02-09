@@ -4,7 +4,7 @@
 #include <memory>
 #include "Model.h"
 
-// 前方宣言 (DXCommon.hをインクルードせずにポインタとして使うため)
+// 前方宣言
 class DXCommon;
 
 class ModelManager{
@@ -12,8 +12,8 @@ public:
 	// シングルトンインスタンスの取得
 	static ModelManager* GetInstance();
 
-	// 終了処理
-	static void Finalize();
+	// ★変更: static を外します (インスタンスを delete するのではなく、中身をクリアする関数にするため)
+	void Finalize();
 
 	// 初期化
 	void Initialize(DXCommon* dxCommon);
@@ -25,8 +25,7 @@ public:
 	Model* FindModel(const std::string& filePath);
 
 private:
-	// シングルトン管理用
-	static ModelManager* instance;
+	// ★削除: static ModelManager* instance; は不要です
 
 	ModelManager() = default;
 	~ModelManager() = default;
@@ -34,6 +33,6 @@ private:
 	ModelManager& operator=(const ModelManager&) = delete;
 
 	// メンバ変数
-	ModelCommon* modelCommon = nullptr;
+	std::unique_ptr<ModelCommon> modelCommon = nullptr;
 	std::map<std::string,std::unique_ptr<Model>> models;
 };

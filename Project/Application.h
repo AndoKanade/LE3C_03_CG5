@@ -17,10 +17,4 @@ public:
 	void Finalize() override;
 	void Update() override;
 	void Draw() override;
-
-private:
-
-	SceneManager* sceneManager_ = nullptr;
-	SpriteCommon* spriteCommon_ = nullptr;
-
 };

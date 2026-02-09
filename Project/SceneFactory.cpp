@@ -2,15 +2,21 @@
 #include "TitleScene.h"
 #include "GameScene.h"
 
-BaseScene* SceneFactory::CreateScene(const std::string& sceneName){
-    // 文字列を見て、対応するクラスを生成して返す
-    BaseScene* newScene = nullptr;
+// ★追加: make_unique を使うために必要
+#include <memory>
 
-    if(sceneName == "TITLE"){
-        newScene = new TitleScene();
-    } else if(sceneName == "GAME"){
-        newScene = new GameScene();
-    }
+// ★変更: 戻り値を BaseScene* から unique_ptr に修正
+std::unique_ptr<BaseScene> SceneFactory::CreateScene(const std::string& sceneName){
+	// 文字列を見て、対応するクラスを生成して返す
+	std::unique_ptr<BaseScene> newScene = nullptr;
 
-    return newScene;
+	if(sceneName == "TITLE"){
+		// ★変更: new ではなく make_unique で生成
+		newScene = std::make_unique<TitleScene>();
+	} else if(sceneName == "GAME"){
+		// ★変更: new ではなく make_unique で生成
+		newScene = std::make_unique<GameScene>();
+	}
+
+	return newScene;
 }
