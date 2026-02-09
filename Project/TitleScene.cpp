@@ -2,6 +2,9 @@
 #include "SceneManager.h" 
 #include "ModelManager.h"
 #include "Input.h"
+#include "Sprite.h"
+#include "SpriteCommon.h"
+#include"TextureManager.h"
 
 // デストラクタ
 TitleScene::~TitleScene(){
@@ -18,13 +21,17 @@ void TitleScene::Finalize(){
 }
 
 // 初期化
-void TitleScene::Initialize(Obj3dCommon* object3dCommon,Input* input){
+void TitleScene::Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommon* spriteCommon){
 	object3dCommon_ = object3dCommon;
 	input_ = input;
+	spriteCommon_ = spriteCommon;
 
 	// --- リソースのロード ---
 	ModelManager::GetInstance()->LoadModel("fence.obj");
+	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
 
+	sprite_ = new Sprite();
+	sprite_->Initialize(spriteCommon_,"resource/uvChecker.png");
 	// --- オブジェクト生成 ---
 	titleObject_ = new Obj3D();
 	titleObject_->Initialize(object3dCommon_);
@@ -44,7 +51,7 @@ void TitleScene::Update(){
 
 	// シーン遷移処理 (スペースキー)
 	if(input_->TriggerKey(DIK_SPACE)){
-	
+
 		// 3. マネージャーに切り替え依頼
 		SceneManager::GetInstance()->ChangeScene("GAME");
 	}
@@ -54,5 +61,11 @@ void TitleScene::Update(){
 void TitleScene::Draw(){
 	if(titleObject_){
 		titleObject_->Draw();
+	}
+
+	if(spriteCommon_ && sprite_){
+		spriteCommon_->Draw(); // 共通設定をコマンドリストに積む(PreDraw的な役割)
+
+		sprite_->Draw();       // スプライト自身の描画コマンドを積む
 	}
 }

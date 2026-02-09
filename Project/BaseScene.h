@@ -4,6 +4,7 @@
 class Obj3dCommon;
 class Input;
 class SceneManager;
+class SpriteCommon;
 
 /// <summary>
 /// シーンの基底クラス (抽象クラス)
@@ -16,8 +17,7 @@ public:
 	// --- 純粋仮想関数 (継承先で必ず実装する) ---
 
 	// 初期化
-	virtual void Initialize(Obj3dCommon* object3dCommon,Input* input) = 0;
-
+	virtual void Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommon* spriteCommon) = 0;
 	// 終了処理
 	virtual void Finalize() = 0;
 

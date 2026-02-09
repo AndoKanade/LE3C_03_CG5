@@ -5,6 +5,7 @@
 
 // --- 前方宣言 (インクルード循環防止・高速化) ---
 class Obj3dCommon;
+class SpriteCommon;
 class Input;
 
 /// <summary>
@@ -54,9 +55,10 @@ public:
 
 	// 共通データ (Input等) をセット
 	// ※Application初期化時に必ず呼ぶこと
-	void SetCommonPtr(Obj3dCommon* common,Input* input){
+	void SetCommonPtr(Obj3dCommon* common,Input* input,SpriteCommon* spriteCommon){
 		object3dCommon_ = common;
 		input_ = input;
+		spriteCommon_ = spriteCommon;
 	}
 
 private:
@@ -74,5 +76,6 @@ private:
 
 	// --- 共通データ (借りてくるもの) ---
 	Obj3dCommon* object3dCommon_ = nullptr;
+	SpriteCommon* spriteCommon_ = nullptr;
 	Input* input_ = nullptr;
 };

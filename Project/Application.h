@@ -21,5 +21,6 @@ public:
 private:
 
 	SceneManager* sceneManager_ = nullptr;
+	SpriteCommon* spriteCommon_ = nullptr;
 
 };

@@ -11,6 +11,9 @@
 /// <summary>
 /// ゲームプレイ画面のシーン
 /// </summary>
+ 
+class SpriteCommon;
+
 class GameScene : public BaseScene{
 public:
 	// コンストラクタ・デストラクタ
@@ -18,8 +21,7 @@ public:
 	~GameScene() override;
 
 	// --- BaseSceneの純粋仮想関数をオーバーライド ---
-	void Initialize(Obj3dCommon* object3dCommon,Input* input) override;
-	void Finalize() override;
+	void Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommon* spriteCommon) override;	void Finalize() override;
 	void Update() override;
 	void Draw() override;
 
@@ -27,6 +29,7 @@ private:
 	// --- システムポインタ (借りてくるもの) ---
 	Obj3dCommon* object3dCommon_ = nullptr;
 	Input* input_ = nullptr;
+	SpriteCommon* spriteCommon_ = nullptr;
 
 	// --- ゲームオブジェクト (このシーンが所有するもの) ---
 	Obj3D* planeObj_ = nullptr;

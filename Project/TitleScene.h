@@ -7,6 +7,11 @@
 /// <summary>
 /// タイトル画面シーン
 /// </summary>
+/// 
+
+class SpriteCommon;
+class Sprite;
+
 class TitleScene : public BaseScene{
 public:
 	// コンストラクタ・デストラクタ
@@ -14,7 +19,7 @@ public:
 	~TitleScene() override;
 
 	// --- BaseSceneの純粋仮想関数をオーバーライド ---
-	void Initialize(Obj3dCommon* object3dCommon,Input* input) override;
+	void Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommon* spriteCommon) override;	
 	void Finalize() override;
 	void Update() override;
 	void Draw() override;
@@ -26,4 +31,7 @@ private:
 
 	// --- ゲームオブジェクト (このシーンが所有するもの) ---
 	Obj3D* titleObject_ = nullptr;
+
+	Sprite* sprite_ = nullptr; // 表示するスプライト
+	SpriteCommon* spriteCommon_ = nullptr; // 保存用
 };

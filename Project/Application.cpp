@@ -16,12 +16,16 @@ void Application::Initialize(){
 	// (ここでWindow生成、DirectX初期化、Input生成などが行われる)
 	Framework::Initialize();
 
+	spriteCommon_ = new SpriteCommon();
+	spriteCommon_->Initialize(dxCommon_); // 例
+
+
 	// 2. シーンマネージャの取得
 	sceneManager_ = SceneManager::GetInstance();
 
 	// 3. 共通データの転送 (Dependency Injection)
 	// (シーンが生成されたときに渡す Input や Obj3dCommon をマネージャに預ける)
-	sceneManager_->SetCommonPtr(object3dCommon_,input_);
+	sceneManager_->SetCommonPtr(object3dCommon_,input_,spriteCommon_);
 
 	// 4. シーン工場の生成とセット
 	sceneFactory_ = new SceneFactory();
@@ -80,6 +84,8 @@ void Application::Finalize(){
 		delete sceneFactory_;
 		sceneFactory_ = nullptr;
 	}
+
+	if(spriteCommon_) delete spriteCommon_;
 
 	// 2. シーンマネージャの解放
 	// (内部で現在のシーンの終了処理なども行われる)

@@ -33,10 +33,11 @@ void GameScene::Finalize(){
 }
 
 // 初期化
-void GameScene::Initialize(Obj3dCommon* object3dCommon,Input* input){
+void GameScene::Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommon* spriteCommon){
 	// メンバ変数に保存
 	object3dCommon_ = object3dCommon;
 	input_ = input;
+	spriteCommon_ = spriteCommon;
 
 	/// -------------------------------------------
 	/// 1. リソースのロード (テクスチャ・モデル・音)

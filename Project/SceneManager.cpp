@@ -69,8 +69,8 @@ void SceneManager::Update(){
 
 			// 共通データ (Obj3dCommon, Input) を渡して初期化
 			// これを行わないとシーン内でメンバ変数が nullptr になりクラッシュする
-			if(object3dCommon_ && input_){
-				scene_->Initialize(object3dCommon_,input_);
+			if(object3dCommon_ && input_ && spriteCommon_){
+				scene_->Initialize(object3dCommon_,input_,spriteCommon_);
 			}
 		}
 
