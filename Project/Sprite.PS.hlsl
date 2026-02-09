@@ -1,25 +1,11 @@
-#include"Sprite.hlsli"
+#include "Sprite.hlsli"
 
-struct Material
-{
-    float32_t4 color;
-    int32_t enableLighting;
-    float32_t4x4 uvTransform;
-    
-};
-
-struct DirectionalLight
-{
-    float32_t4 color;
-    float32_t3 direction;
-    float intensity;
-    
-};
+// ★ここに struct Material を書いてはいけません（hlsliにあるから）
+// ★ DirectionalLight (b2) も書いてはいけません（C++から送ってないから）
 
 ConstantBuffer<Material> gMaterial : register(b0);
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
-ConstantBuffer<DirectionalLight> gDirectionalLight : register(b2);
 
 struct PixelShaderOutput
 {
@@ -29,27 +15,17 @@ struct PixelShaderOutput
 PixelShaderOutput main(VertexShaderOutput input)
 {
     PixelShaderOutput output;
-   
+    
+    // UV変換
     float4 transformedUV = mul(float32_t4(input.texcoord, 0.0f, 1.0f), gMaterial.uvTransform);
+    
+    // テクスチャの色を取得
     float32_t4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
     
-    if (gMaterial.enableLighting != 0)
-    {
-        float NdotL = dot(normalize(input.normal), -gDirectionalLight.direction);
-        float cos = pow(NdotL * 0.5f + 0.5f, 2.0f);
-        output.color.rgb = gMaterial.color.rgb * textureColor.rgb * gDirectionalLight.color.rgb * cos * gDirectionalLight.intensity;
-        output.color.a = gMaterial.color.a * textureColor.a;
-    }
-    else
-    {
-        output.color = gMaterial.color * textureColor;
-    }
+    // ライト計算はせず、そのままの色を出力
+    output.color = gMaterial.color * textureColor;
     
-    if (textureColor.a <= 0.5f)
-    {
-        discard;
-    }
-    
+    // 透明部分の除外
     if (textureColor.a == 0.0f)
     {
         discard;

@@ -1,4 +1,4 @@
-#include"Sprite.hlsli"
+#include "Sprite.hlsli"
 
 struct TransformationMatrix
 {
@@ -18,9 +18,14 @@ struct VertexShaderInput
 VertexShaderOutput main(VertexShaderInput input)
 {
     VertexShaderOutput output;
+    
+    // 座標変換
     output.position = mul(input.position, gTransformationMatrix.WVP);
+    
+    // UV座標を渡す
     output.texcoord = input.texcoord;
-    output.normal = normalize(mul(input.normal, (float32_t3x3) gTransformationMatrix.World));
+    
+    // ★ normalの計算は削除しました（hlsliから消したため）
     
     return output;
 }
