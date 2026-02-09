@@ -5,15 +5,16 @@
 #include "Sprite.h"       // unique_ptrの削除に必須
 #include "SpriteCommon.h"
 #include "TextureManager.h"
-#include "imgui.h"
+
+// ★追加: ImGuiを使わない設定のときはヘッダーも読まないようにする
+#ifdef USE_IMGUI
+#include "imguiManager.h"
+#endif
 
 // ★コンストラクタ (LNK2001エラー対策)
-// ヘッダーで宣言したコンストラクタの実体です。
 TitleScene::TitleScene() = default;
 
 // ★デストラクタ (C2027エラー対策)
-// ここで unique_ptr<Sprite> などが自動的に削除されます。
-// Sprite.h が見えているこの場所で定義する必要があります。
 TitleScene::~TitleScene(){}
 
 // 初期化
@@ -27,7 +28,6 @@ void TitleScene::Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommo
 	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
 
 	// --- スプライト生成 ---
-	// ★new ではなく std::make_unique を使う
 	sprite_ = std::make_unique<Sprite>();
 
 	// 初期化と設定
@@ -37,7 +37,6 @@ void TitleScene::Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommo
 	sprite_->SetColor({1.0f, 1.0f, 1.0f, 1.0f}); // 真っ白（不透明）
 
 	// --- 3Dオブジェクト生成 ---
-	// ★ここも make_unique
 	titleObject_ = std::make_unique<Obj3D>();
 
 	titleObject_->Initialize(object3dCommon_);
@@ -50,21 +49,22 @@ void TitleScene::Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommo
 
 // 終了処理
 void TitleScene::Finalize(){
-	// ★中身は空っぽでOK！
-	// unique_ptr が自動でメモリ解放してくれるので、deleteを書く必要はありません。
-	// ただし、BaseSceneで仮想関数になっているため、関数自体は消さずに残しておきます。
+	// unique_ptr が自動でメモリ解放してくれるので空でOK
 }
 
 // 更新
 void TitleScene::Update(){
 
 	// --- ImGuiの処理 ---
+	// ★追加: マクロが定義されているときだけ実行する
+#ifdef USE_IMGUI
 	ImGui::Begin("Sprite Settings");
 
 	// 色と透明度をまとめて変更
 	ImGui::ColorEdit4("Color & Alpha",&spriteColor_.x);
 
 	ImGui::End();
+#endif
 
 	// オブジェクトの更新
 	if(titleObject_){
@@ -73,6 +73,7 @@ void TitleScene::Update(){
 
 	// スプライトの更新
 	if(sprite_){
+		// ImGuiが無効な場合、spriteColor_ は初期値のままになります
 		sprite_->SetColor(spriteColor_);
 		sprite_->Update();
 	}
