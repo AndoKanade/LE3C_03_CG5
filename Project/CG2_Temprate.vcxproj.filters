@@ -182,6 +182,9 @@
     <None Include="resource\shader\Particle.hlsli">
       <Filter>Resources\shader</Filter>
     </None>
+    <None Include="Sprite.hlsli">
+      <Filter>Resources\shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DXCommon.h">
@@ -285,6 +288,12 @@
       <Filter>Resources\shader</Filter>
     </FxCompile>
     <FxCompile Include="resource\shader\Particle.VS.hlsl">
+      <Filter>Resources\shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Sprite.VS.hlsl">
+      <Filter>Resources\shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Sprite.PS.hlsl">
       <Filter>Resources\shader</Filter>
     </FxCompile>
   </ItemGroup>
