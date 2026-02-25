@@ -21,7 +21,7 @@ public:
     HWND GetHwnd() const{ return hwnd; }
     HINSTANCE GetHinstance() const{ return wc.hInstance; }
 
-    static const int32_t kCliantWidth = 1280;
+    static const int32_t kClientWidth = 1280;
     static const int32_t kCliantHeight = 720;
 
 private:

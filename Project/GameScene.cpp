@@ -77,6 +77,10 @@ void GameScene::Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommon
 	fenceObj_->Initialize(object3dCommon_);
 	fenceObj_->SetModel(kModelFence);
 
+	sphereObj_ = std::make_unique<Obj3D>();
+	sphereObj_->Initialize(object3dCommon_);
+	sphereObj_->SetModel(kModelSphere);
+
 	// 親子付け設定
 	// unique_ptrから生ポインタ(.get())を取り出して親としてセットします
 	fenceObj_->SetParent(planeObj_);
@@ -107,8 +111,9 @@ void GameScene::Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommon
 void GameScene::Update(){
 
 	// 1. オブジェクトの更新
-	if(planeObj_){ planeObj_->Update(); }
-	if(fenceObj_){ fenceObj_->Update(); }
+	if(sphereObj_){
+		sphereObj_->Update();
+	}
 
 	// 2. パーティクルの更新
 	if(particleEmitter_){ particleEmitter_->Update(); }
@@ -137,6 +142,17 @@ void GameScene::Update(){
 			ImGui::DragFloat3("Parent(Plane) Pos",&pPos.x,0.1f);
 			planeObj_->SetTranslate(pPos);
 		}
+		if(sphereObj_){
+			ImGui::Separator();
+			ImGui::Text("Sphere Object");
+
+			// 回転 (Rotation)
+			Vector3 sRot = sphereObj_->GetRotate();
+			// 回転は見やすいように少し感度を変えることもあります (0.1f -> 1.0fなど)
+			if(ImGui::DragFloat3("Sphere Rotate",&sRot.x,0.1f)){
+				sphereObj_->SetRotate(sRot);
+			}
+		}
 
 		ImGui::End();
 	}
@@ -146,9 +162,5 @@ void GameScene::Update(){
 // 描画処理
 void GameScene::Draw(){
 	// オブジェクト描画
-	if(planeObj_){ planeObj_->Draw(); }
-	if(fenceObj_){ fenceObj_->Draw(); }
-
-	// ※パーティクルの描画は ParticleManager が一括で行う設計の場合はここに書かなくてOKです。
-	// もしシーンごとに描画指示が必要なら、particleEmitter_->Draw() などを追加してください。
+	if(sphereObj_){ sphereObj_->Draw(); }
 }

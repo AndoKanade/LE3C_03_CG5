@@ -155,7 +155,7 @@ void DXCommon::InitCommand(){
 
 void DXCommon::CreateSwapChain(){
 	HRESULT hr;
-	swapChainDesc.Width = winApi_->kCliantWidth;
+	swapChainDesc.Width = winApi_->kClientWidth;
 	swapChainDesc.Height = winApi_->kCliantHeight;
 	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swapChainDesc.SampleDesc.Count = 1;
@@ -174,7 +174,7 @@ void DXCommon::CreateSwapChain(){
 
 void DXCommon::CreateDepthBuffer(){
 	D3D12_RESOURCE_DESC resourceDesc{};
-	resourceDesc.Width = winApi_->kCliantWidth;
+	resourceDesc.Width = winApi_->kClientWidth;
 	resourceDesc.Height = winApi_->kCliantHeight;
 	resourceDesc.MipLevels = 1;
 	resourceDesc.DepthOrArraySize = 1;
@@ -250,7 +250,7 @@ void DXCommon::InitFence(){
 }
 
 void DXCommon::InitViewportRect(){
-	viewport.Width = WinAPI::kCliantWidth;
+	viewport.Width = WinAPI::kClientWidth;
 	viewport.Height = WinAPI::kCliantHeight;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
@@ -261,7 +261,7 @@ void DXCommon::InitViewportRect(){
 void DXCommon::InitScissorRect(){
 	// Scissor
 	scissorRect.left = 0;
-	scissorRect.right = WinAPI::kCliantWidth;
+	scissorRect.right = WinAPI::kClientWidth;
 	scissorRect.top = 0;
 	scissorRect.bottom = WinAPI::kCliantHeight;
 }

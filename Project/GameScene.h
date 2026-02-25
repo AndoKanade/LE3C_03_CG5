@@ -40,6 +40,7 @@ private:
 	// ※シーン破棄時に自動的にメモリ解放されるよう、unique_ptrで管理します
 	std::shared_ptr<Obj3D> planeObj_;
 	std::shared_ptr<Obj3D> fenceObj_;
+	std::shared_ptr<Obj3D> sphereObj_;
 	std::unique_ptr<ParticleEmitter> particleEmitter_;
 
 	// --- メンバ変数：パラメータ・フラグ ---

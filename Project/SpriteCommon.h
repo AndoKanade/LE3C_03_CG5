@@ -22,7 +22,7 @@ public:
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[3] = {};
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
 	D3D12_BLEND_DESC blendDesc{};
-	D3D12_RASTERIZER_DESC resterizerDesc{};
+	D3D12_RASTERIZER_DESC rasterizerDesc{};
 	Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob;
 	Microsoft::WRL::ComPtr<IDxcBlob> pixelShaderBlob;
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};

@@ -102,7 +102,7 @@ void Sprite::Update(){
 			transform.translate);
 	viewMatrix = MakeIdentity4x4();
 	projectionMatrix =
-		MakeOrthographicMatrix(0.0f,0.0f,float(WinAPI::kCliantWidth),
+		MakeOrthographicMatrix(0.0f,0.0f,float(WinAPI::kClientWidth),
 			float(WinAPI::kCliantHeight),0.0f,100.0f);
 
 	transformationMatrixData->WVP = Multiply(worldMatrix,Multiply(viewMatrix,projectionMatrix));
