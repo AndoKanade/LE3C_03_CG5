@@ -1,97 +1,101 @@
 #include "TitleScene.h"
-#include "SceneManager.h" 
-#include "ModelManager.h"
+
+// エンジン/システム関連
 #include "Input.h"
-#include "Sprite.h"       // unique_ptrの削除に必須
+#include "ModelManager.h"
+#include "SceneManager.h"
+#include "Obj3D.h"
+#include "Sprite.h"
 #include "SpriteCommon.h"
 #include "TextureManager.h"
 
-// ★追加: ImGuiを使わない設定のときはヘッダーも読まないようにする
+// ImGui (マクロ定義がある場合のみ)
 #ifdef USE_IMGUI
 #include "imguiManager.h"
 #endif
 
-// ★コンストラクタ (LNK2001エラー対策)
+// 定数定義 (ファイルパスやパラメータ)
+namespace{
+    const std::string kModelName = "fence.obj";
+    const std::string kTextureName = "resource/uvChecker.png";
+    const float kSpriteSize = 300.0f;
+}
+
+// コンストラクタ
 TitleScene::TitleScene() = default;
 
-// ★デストラクタ (C2027エラー対策)
-TitleScene::~TitleScene(){}
+// デストラクタ
+TitleScene::~TitleScene() = default;
 
-// 初期化
+// 初期化処理
 void TitleScene::Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommon* spriteCommon){
-	object3dCommon_ = object3dCommon;
-	input_ = input;
-	spriteCommon_ = spriteCommon;
+    // メンバ変数の保持
+    object3dCommon_ = object3dCommon;
+    input_ = input;
+    spriteCommon_ = spriteCommon;
 
-	// --- リソースのロード ---
-	ModelManager::GetInstance()->LoadModel("fence.obj");
-	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
+    // --- リソースのロード ---
+    ModelManager::GetInstance()->LoadModel(kModelName);
+    TextureManager::GetInstance()->LoadTexture(kTextureName);
 
-	// --- スプライト生成 ---
-	sprite_ = std::make_unique<Sprite>();
+    // --- スプライト生成と設定 ---
+    sprite_ = std::make_unique<Sprite>();
+    sprite_->Initialize(spriteCommon_,kTextureName);
+    sprite_->SetPosition({0.0f, 0.0f});         // 左上
+    sprite_->SetSize({kSpriteSize, kSpriteSize});
+    sprite_->SetColor({1.0f, 1.0f, 1.0f, 1.0f}); // 白（不透明）
 
-	// 初期化と設定
-	sprite_->Initialize(spriteCommon_,"resource/uvChecker.png");
-	sprite_->SetPosition({0.0f, 0.0f});       // 左上に配置
-	sprite_->SetSize({300.0f, 300.0f});       // 見える大きさに設定
-	sprite_->SetColor({1.0f, 1.0f, 1.0f, 1.0f}); // 真っ白（不透明）
-
-	// --- 3Dオブジェクト生成 ---
-	titleObject_ = std::make_unique<Obj3D>();
-
-	titleObject_->Initialize(object3dCommon_);
-	titleObject_->SetModel("fence.obj");
-
-	// 座標とサイズの設定
-	titleObject_->SetTranslate({0.0f, 0.0f, 0.0f});
-	titleObject_->SetScale({0.5f, 0.5f, 0.5f});
+    // --- 3Dオブジェクト生成と設定 ---
+    titleObject_ = std::make_unique<Obj3D>();
+    titleObject_->Initialize(object3dCommon_);
+    titleObject_->SetModel(kModelName);
+    titleObject_->SetTranslate({0.0f, 0.0f, 0.0f});
+    titleObject_->SetScale({0.5f, 0.5f, 0.5f});
 }
 
 // 終了処理
 void TitleScene::Finalize(){
-	// unique_ptr が自動でメモリ解放してくれるので空でOK
+    // unique_ptrにより自動解放されるため処理なし
 }
 
-// 更新
+// 更新処理
 void TitleScene::Update(){
 
-	// --- ImGuiの処理 ---
-	// ★追加: マクロが定義されているときだけ実行する
+    // 1. ImGuiの設定更新
 #ifdef USE_IMGUI
-	ImGui::Begin("Sprite Settings");
-
-	// 色と透明度をまとめて変更
-	ImGui::ColorEdit4("Color & Alpha",&spriteColor_.x);
-
-	ImGui::End();
+    ImGui::Begin("Sprite Settings");
+    ImGui::ColorEdit4("Color & Alpha",&spriteColor_.x); // 色と透明度の調整
+    ImGui::End();
 #endif
 
-	// オブジェクトの更新
-	if(titleObject_){
-		titleObject_->Update();
-	}
+    // 2. オブジェクトの更新
+    if(titleObject_){
+        titleObject_->Update();
+    }
 
-	// スプライトの更新
-	if(sprite_){
-		// ImGuiが無効な場合、spriteColor_ は初期値のままになります
-		sprite_->SetColor(spriteColor_);
-		sprite_->Update();
-	}
+    // 3. スプライトの更新
+    if(sprite_){
+        // ImGuiが無効な場合、spriteColor_ は初期値が適用されます
+        sprite_->SetColor(spriteColor_);
+        sprite_->Update();
+    }
 
-	// シーン遷移処理 (スペースキー)
-	if(input_->TriggerKey(DIK_SPACE)){
-		SceneManager::GetInstance()->ChangeScene("GAME");
-	}
+    // 4. シーン遷移 (スペースキー)
+    if(input_->TriggerKey(DIK_SPACE)){
+        SceneManager::GetInstance()->ChangeScene("GAME");
+    }
 }
 
-// 描画
+// 描画処理
 void TitleScene::Draw(){
-	if(titleObject_){
-		titleObject_->Draw();
-	}
+    // 3Dオブジェクト描画
+    if(titleObject_){
+        titleObject_->Draw();
+    }
 
-	if(spriteCommon_ && sprite_){
-		spriteCommon_->Draw(); // 共通設定 (PreDraw)
-		sprite_->Draw();       // スプライト描画
-	}
+    // 2Dスプライト描画
+    if(spriteCommon_ && sprite_){
+        spriteCommon_->Draw(); // 描画前処理
+        sprite_->Draw();       // スプライト本体
+    }
 }

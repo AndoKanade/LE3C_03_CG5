@@ -1,22 +1,28 @@
 #include "SceneFactory.h"
+
+// --- 生成対象のシーンヘッダー ---
+// std::make_unique でコンストラクタを呼び出すため、
+// クラスの定義（中身）が書かれたヘッダーをインクルードする必要があります。
 #include "TitleScene.h"
 #include "GameScene.h"
 
-// ★追加: make_unique を使うために必要
+// std::make_unique用
 #include <memory>
 
-// ★変更: 戻り値を BaseScene* から unique_ptr に修正
+// シーン生成処理
 std::unique_ptr<BaseScene> SceneFactory::CreateScene(const std::string& sceneName){
-	// 文字列を見て、対応するクラスを生成して返す
-	std::unique_ptr<BaseScene> newScene = nullptr;
 
+	// 1. タイトル画面
 	if(sceneName == "TITLE"){
-		// ★変更: new ではなく make_unique で生成
-		newScene = std::make_unique<TitleScene>();
-	} else if(sceneName == "GAME"){
-		// ★変更: new ではなく make_unique で生成
-		newScene = std::make_unique<GameScene>();
+		return std::make_unique<TitleScene>();
 	}
 
-	return newScene;
+	// 2. ゲームプレイ画面
+	if(sceneName == "GAME"){
+		return std::make_unique<GameScene>();
+	}
+
+	// 3. 該当するシーン名がない場合
+	// 予期せぬ文字列が来た場合は nullptr を返してエラー扱いにします
+	return nullptr;
 }

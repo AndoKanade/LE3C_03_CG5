@@ -1,118 +1,157 @@
 #include "GameScene.h"
-#include "TextureManager.h"
-#include "ModelManager.h"
-#include "SoundManager.h"
-#include "ParticleManager.h"
+
+// --- エンジン/システム関連 ---
 #include "CameraManager.h"
 #include "ImGuiManager.h"
+#include "ModelManager.h"
+#include "ParticleManager.h"
+#include "SoundManager.h"
+#include "TextureManager.h"
+
+// --- ゲームオブジェクト関連 ---
+// Obj3Dなどの実体を使うため、必ずインクルードする
+#include "Input.h"
+#include "Obj3D.h"
+#include "Obj3dCommon.h"
+#include "ParticleEmitter.h"
+#include "SpriteCommon.h"
+
+// --- 定数定義 ---
+namespace{
+	// ファイルパス
+	const std::string kTextureChecker = "resource/uvChecker.png";
+	const std::string kTextureBall = "resource/monsterball.png";
+	const std::string kTextureCircle = "resource/Circle.png";
+
+	const std::string kModelPlane = "plane.obj";
+	const std::string kModelFence = "fence.obj";
+	const std::string kModelSphere = "sphere.obj";
+
+	const std::string kParticleName = "Circle";
+}
 
 // コンストラクタ
 GameScene::GameScene() = default;
 
 // デストラクタ
-GameScene::~GameScene(){}
+GameScene::~GameScene() = default;
 
 // 終了処理
 void GameScene::Finalize(){
-	// shared_ptr / unique_ptr が自動解放してくれるので空でOK
+	// unique_ptr が自動的にメモリを解放するため、明示的な処理は不要です
 }
 
-// 初期化
+// 初期化処理
 void GameScene::Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommon* spriteCommon){
-	// メンバ変数に保存
+	// 1. システムポインタの保持
 	object3dCommon_ = object3dCommon;
 	input_ = input;
 	spriteCommon_ = spriteCommon;
 
-	/// -------------------------------------------
-	/// 1. リソースのロード
-	/// -------------------------------------------
-	TextureManager::GetInstance()->LoadTexture("resource/uvChecker.png");
-	TextureManager::GetInstance()->LoadTexture("resource/monsterball.png");
-	TextureManager::GetInstance()->LoadTexture("resource/Circle.png");
+	// 2. リソースのロード
+	// テクスチャ
+	TextureManager::GetInstance()->LoadTexture(kTextureChecker);
+	TextureManager::GetInstance()->LoadTexture(kTextureBall);
+	TextureManager::GetInstance()->LoadTexture(kTextureCircle);
 
-	ModelManager::GetInstance()->LoadModel("plane.obj");
-	ModelManager::GetInstance()->LoadModel("fence.obj");
-	ModelManager::GetInstance()->LoadModel("sphere.obj");
+	// モデル
+	ModelManager::GetInstance()->LoadModel(kModelPlane);
+	ModelManager::GetInstance()->LoadModel(kModelFence);
+	ModelManager::GetInstance()->LoadModel(kModelSphere);
 
+	// サウンド
 	SoundManager::GetInstance()->SoundLoadFile(kBgmPath_);
 
-	// パーティクルグループの作成
-	ParticleManager::GetInstance()->CreateParticleGroup("Circle","resource/Circle.png");
+	// パーティクル設定
+	ParticleManager::GetInstance()->CreateParticleGroup(kParticleName,kTextureCircle);
 
-	/// -------------------------------------------
-	/// 2. オブジェクトの生成と初期化
-	/// -------------------------------------------
+	// 3. オブジェクトの生成と初期化
 
-	// ■ 親: 地面 (Plane)
-	// ★変更: make_shared で生成 (weak_ptrで参照される側は shared_ptr 必須)
-	planeObj_ = std::make_shared<Obj3D>();
+	// --- 親オブジェクト: 地面 (Plane) ---
+	planeObj_ = std::make_unique<Obj3D>();
 	planeObj_->Initialize(object3dCommon_);
-	planeObj_->SetModel("plane.obj");
+	planeObj_->SetModel(kModelPlane);
 
-	// ■ 子: 柵 (Fence)
-	// ★変更: make_shared で生成
-	fenceObj_ = std::make_shared<Obj3D>();
+	// --- 子オブジェクト: 柵 (Fence) ---
+	fenceObj_ = std::make_unique<Obj3D>();
 	fenceObj_->Initialize(object3dCommon_);
-	fenceObj_->SetModel("fence.obj");
+	fenceObj_->SetModel(kModelFence);
 
-	// ★追加: 親子付け (EX課題)
-	// これで Fence は Plane の動きについていくようになります
+	sphereObj_ = std::make_unique<Obj3D>();
+	sphereObj_->Initialize(object3dCommon_);
+	sphereObj_->SetModel(kModelSphere);
+
+	// 親子付け設定
+	// unique_ptrから生ポインタ(.get())を取り出して親としてセットします
 	fenceObj_->SetParent(planeObj_);
 
-	// 座標設定 (親である Plane からの相対座標になります)
+	// 座標設定 (親である Plane からの相対座標)
 	fenceObj_->SetTranslate({2.0f, 0.0f, 0.0f});
 
-
-	// パーティクルエミッタ (ここは親を持たないので unique_ptr のままでOK)
+	// --- パーティクルエミッタ ---
 	Transform emitterConfig;
 	emitterConfig.scale = {1.0f, 1.0f, 1.0f};
-	particleEmitter_ = std::make_unique<ParticleEmitter>("Circle",emitterConfig,10,0.2f);
+	// 名前、Transform、数、寿命を指定して生成
+	particleEmitter_ = std::make_unique<ParticleEmitter>(kParticleName,emitterConfig,10,0.2f);
 
-	/// -------------------------------------------
-	/// 3. カメラの設定 (元のコードのまま)
-	/// -------------------------------------------
+	// 4. カメラの設定
 	CameraManager::GetInstance()->CreateCamera("default");
 	auto* defaultCamera = CameraManager::GetInstance()->GetCamera("default");
-	defaultCamera->SetTranslate({0.0f, 0.0f, -10.0f});
-	CameraManager::GetInstance()->SetActiveCamera("default");
 
-	// 3Dオブジェクト共通設定にカメラをセット
+	if(defaultCamera){
+		defaultCamera->SetTranslate({0.0f, 0.0f, -10.0f});
+		CameraManager::GetInstance()->SetActiveCamera("default");
+	}
+
+	// 3Dオブジェクト共通設定にアクティブカメラを登録
 	object3dCommon_->SetDefaultCamera(CameraManager::GetInstance()->GetActiveCamera());
 }
 
-// 更新
+// 更新処理
 void GameScene::Update(){
-	// オブジェクトの更新
-	if(planeObj_){ planeObj_->Update(); }
-	if(fenceObj_){ fenceObj_->Update(); }
 
-	// パーティクルの更新
+	// 1. オブジェクトの更新
+	if(sphereObj_){
+		sphereObj_->Update();
+	}
+
+	// 2. パーティクルの更新
 	if(particleEmitter_){ particleEmitter_->Update(); }
 
-	// BGM再生
+	// 3. サウンド処理 (スペースキーで再生)
 	if(input_->TriggerKey(DIK_SPACE)){
 		if(!SoundManager::GetInstance()->IsPlaying(kBgmPath_)){
 			SoundManager::GetInstance()->PlayAudio(kBgmPath_,0.5f,true);
 		}
 	}
 
-	// ImGui (デバッグ用)
+	// 4. ImGui (デバッグ用)
 #ifdef USE_IMGUI
 	Camera* activeCamera = CameraManager::GetInstance()->GetActiveCamera();
 	if(activeCamera){
 		ImGui::Begin("GameScene Debug");
 
 		// カメラ位置調整
-		Vector3 translate = activeCamera->GetTranslate();
-		ImGui::DragFloat3("Camera Pos",&translate.x,0.1f);
-		activeCamera->SetTranslate(translate);
+		Vector3 camPos = activeCamera->GetTranslate();
+		ImGui::DragFloat3("Camera Pos",&camPos.x,0.1f);
+		activeCamera->SetTranslate(camPos);
 
-		// ★追加: 親(Plane)を動かして、親子関係を確認できるようにしておく
+		// 親オブジェクト(Plane)の操作
 		if(planeObj_){
 			Vector3 pPos = planeObj_->GetTranslate();
 			ImGui::DragFloat3("Parent(Plane) Pos",&pPos.x,0.1f);
 			planeObj_->SetTranslate(pPos);
+		}
+		if(sphereObj_){
+			ImGui::Separator();
+			ImGui::Text("Sphere Object");
+
+			// 回転 (Rotation)
+			Vector3 sRot = sphereObj_->GetRotate();
+			// 回転は見やすいように少し感度を変えることもあります (0.1f -> 1.0fなど)
+			if(ImGui::DragFloat3("Sphere Rotate",&sRot.x,0.1f)){
+				sphereObj_->SetRotate(sRot);
+			}
 		}
 
 		ImGui::End();
@@ -120,11 +159,8 @@ void GameScene::Update(){
 #endif
 }
 
-// 描画
+// 描画処理
 void GameScene::Draw(){
-	// オブジェクトの描画
-	if(planeObj_){ planeObj_->Draw(); }
-	if(fenceObj_){ fenceObj_->Draw(); }
-
-	// パーティクルの描画が必要ならここに追加
+	// オブジェクト描画
+	if(sphereObj_){ sphereObj_->Draw(); }
 }

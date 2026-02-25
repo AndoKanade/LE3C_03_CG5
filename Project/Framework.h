@@ -1,9 +1,14 @@
 #pragma once
 
-// --- 必要なヘッダー類 ---
+// --- 標準ライブラリ ---
+#include <memory>
+
+// --- 基盤・システムヘッダー ---
 #include "WinAPI.h"
 #include "DXCommon.h"
 #include "Input.h"
+
+// --- マネージャー・共通クラス ---
 #include "SrvManager.h"
 #include "ImGuiManager.h"
 #include "SoundManager.h"
@@ -13,57 +18,68 @@
 #include "ModelManager.h"
 #include "SpriteCommon.h"
 #include "Obj3DCommon.h"
+
+// --- シーン関連 ---
 #include "BaseScene.h"
 #include "AbstractSceneFactory.h"
 
-// ★追加: unique_ptr用
-#include <memory>
-
 /// <summary>
-/// ゲームの土台となるクラス (エンジン部分)
+/// ゲームエンジンの基盤クラス
+/// ウィンドウ生成、DirectX初期化、入力管理、メインループの流れを制御します。
+/// 継承先のクラス（MyGameなど）で具体的なゲームロジックと描画を実装します。
 /// </summary>
 class Framework{
-public: // --- 仮想関数 ---
+public: // --- 公開メソッド ---
 
-	// 仮想デストラクタ (default で定義)
+	/// <summary>
+	/// 仮想デストラクタ
+	/// </summary>
 	virtual ~Framework() = default;
 
-	// 初期化
+	/// <summary>
+	/// 初期化処理
+	/// ウィンドウ、DirectX、各マネージャの生成と初期化を行います。
+	/// </summary>
 	virtual void Initialize();
 
-	// 終了
+	/// <summary>
+	/// 終了処理
+	/// 確保したリソースの解放や、システムの終了処理を行います。
+	/// </summary>
 	virtual void Finalize();
 
-	// 毎フレーム更新
+	/// <summary>
+	/// 毎フレームの更新処理
+	/// 入力情報の更新や、共通システムの更新を行います。
+	/// </summary>
 	virtual void Update();
 
-	// 描画 (純粋仮想関数: 継承先での実装を強制する)
+	/// <summary>
+	/// 描画処理（純粋仮想関数）
+	/// 実際の描画内容は継承先のクラスで実装する必要があります。
+	/// </summary>
 	virtual void Draw() = 0;
 
-	// 終了リクエストの確認
+	/// <summary>
+	/// ゲームループ終了リクエストの確認
+	/// </summary>
+	/// <returns>終了フラグが立っていれば true</returns>
 	virtual bool IsEndRequest(){ return endRequest_; }
 
-protected: // 継承先(MyGame)でも使えるように protected にする
+protected: // --- メンバ変数（継承先からもアクセス可能） ---
 
-	// 終了フラグ
+	// ゲームループ終了フラグ
 	bool endRequest_ = false;
 
-	// --- 基盤システム (Frameworkが所有権を持つ) ---
-	// ★変更: 生ポインタから unique_ptr に変更
-	std::unique_ptr<WinAPI> winApi_;
-	std::unique_ptr<DXCommon> dxCommon_;
-	std::unique_ptr<Input> input_;
+	// --- コアシステム群 (Frameworkが所有権を持つ) ---
+	std::unique_ptr<WinAPI> winApi_;       // ウィンドウ管理
+	std::unique_ptr<DXCommon> dxCommon_;   // DirectX基本設定
+	std::unique_ptr<Input> input_;         // 入力管理
 
-	// --- 描画共通 (Frameworkが所有権を持つ) ---
-	// ★変更: 生ポインタから unique_ptr に変更
-	std::unique_ptr<SpriteCommon> spriteCommon_;
-	std::unique_ptr<Obj3dCommon> object3dCommon_;
+	// --- 描画共通設定 (Frameworkが所有権を持つ) ---
+	std::unique_ptr<SpriteCommon> spriteCommon_;     // スプライト共通設定
+	std::unique_ptr<Obj3dCommon> object3dCommon_;    // 3Dオブジェクト共通設定
 
-	// --- シーン関連 ---
-	// ★変更: 工場も Framework が所有して管理する
-	std::unique_ptr<AbstractSceneFactory> sceneFactory_;
-
-	// ※ BaseScene* scene_; は削除しました！
-	// 理由は、SceneManager が unique_ptr でシーンを管理するようになったため、
-	// Framework 側で二重管理する必要がなくなったからです。
+	// --- シーン管理 ---
+	std::unique_ptr<AbstractSceneFactory> sceneFactory_; // シーン生成ファクトリー
 };

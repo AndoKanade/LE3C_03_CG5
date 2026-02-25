@@ -1,14 +1,16 @@
 #pragma once
 #include "WinAPI.h"
-#include <DirectXTex.h>
-#include <array>
-#include <d3d12.h>
-#include<chrono>
 
-#include <dxcapi.h>
+#include <d3d12.h>
 #include <dxgi1_6.h>
-#include <string>
+#include <dxcapi.h>
+#include <DirectXTex.h>
 #include <wrl.h>
+
+#include <array>
+#include <chrono>
+#include <string>
+#include <cstdint>
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -17,47 +19,60 @@
 
 class DXCommon{
 public:
+	// 名前空間の省略 (メンバ変数定義用)
+	template <class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
+
 #pragma region メンバ変数
-	Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory;
-	Microsoft::WRL::ComPtr<ID3D12Device> device;
 
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue = nullptr;
+public:
+	// --- Direct3D Core ---
+	ComPtr<IDXGIFactory7> dxgiFactory;
+	ComPtr<ID3D12Device> device;
 
-	Microsoft::WRL::ComPtr<IDXGISwapChain4> swapChain = nullptr;
+	// --- Command Objects ---
+	ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
+	ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
+	ComPtr<ID3D12CommandQueue> commandQueue = nullptr;
+
+	// --- SwapChain & RenderTargets ---
+	ComPtr<IDXGISwapChain4> swapChain = nullptr;
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-	std::array<Microsoft::WRL::ComPtr<ID3D12Resource>,2> swapChainResources;
+	std::array<ComPtr<ID3D12Resource>,2> swapChainResources;
+	std::array<ComPtr<ID3D12Resource>,2> backBuffers;
 
-	Microsoft::WRL::ComPtr<ID3D12Resource> depthStencilResource = nullptr;
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle;
-
-	uint32_t descriptorSizeRTV = 0;
-	uint32_t descriptorSizeDSV = 0;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = nullptr;
-
+	// --- RTV Descriptor Heap ---
+	ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap = nullptr;
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2];
-	std::array<Microsoft::WRL::ComPtr<ID3D12Resource>,2> backBuffers;
+	uint32_t descriptorSizeRTV = 0;
 
-	Microsoft::WRL::ComPtr<ID3D12Fence> fence = nullptr;
+	// --- Depth Stencil ---
+	ComPtr<ID3D12Resource> depthStencilResource = nullptr;
+	ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap = nullptr;
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle;
+	uint32_t descriptorSizeDSV = 0;
 
+	// --- Synchronization (Fence) ---
+	ComPtr<ID3D12Fence> fence = nullptr;
+	uint64_t fenceValue = 0;
+	HANDLE fenceEvent = nullptr;
+	D3D12_RESOURCE_BARRIER barrier{};
+
+	// --- Viewport & Scissor ---
 	D3D12_VIEWPORT viewport{};
 	D3D12_RECT scissorRect{};
 
-	Microsoft::WRL::ComPtr<IDxcUtils> dxcUtils = nullptr;
-	Microsoft::WRL::ComPtr<IDxcCompiler3> dxcCompiler = nullptr;
+	// --- DXC (Shader Compiler) ---
+	ComPtr<IDxcUtils> dxcUtils = nullptr;
+	ComPtr<IDxcCompiler3> dxcCompiler = nullptr;
 	IDxcIncludeHandler* includeHandler = nullptr;
-
-	D3D12_RESOURCE_BARRIER barrier{};
-	uint64_t fenceValue = 0;
-	HANDLE fenceEvent = nullptr;
 
 #pragma endregion
 
 #pragma region メンバ関数
 
+public:
+	// --- 初期化フロー ---
 	void Initialize(WinAPI* winApi);
 
 	void InitDevice();
@@ -72,65 +87,66 @@ public:
 	void InitScissorRect();
 	void CreateDXCCompiler();
 
+	// --- 描画フロー ---
 	void PreDraw();
 	void PostDraw();
 
 #pragma endregion
 
 #pragma region ユーティリティ関数
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>
-		CreateDiscriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType,UINT numDescriptors,
-			bool shaderVisible);
 
-	Microsoft::WRL::ComPtr<IDxcBlob> CompileShader(const std::wstring& filePath,
-		const wchar_t* profile);
+	ComPtr<ID3D12DescriptorHeap> CreateDiscriptorHeap(
+		D3D12_DESCRIPTOR_HEAP_TYPE heapType,
+		UINT numDescriptors,
+		bool shaderVisible
+	);
 
-	Microsoft::WRL::ComPtr<ID3D12Resource>
-		CreateBufferResource(size_t sizeInBytes);
+	ComPtr<IDxcBlob> CompileShader(
+		const std::wstring& filePath,
+		const wchar_t* profile
+	);
 
-	Microsoft::WRL::ComPtr<ID3D12Resource>
-		CreateTextureResource(const DirectX::TexMetadata& metadata);
+	ComPtr<ID3D12Resource> CreateBufferResource(size_t sizeInBytes);
 
-	Microsoft::WRL::ComPtr<ID3D12Resource>
-		UploadTextureData(const Microsoft::WRL::ComPtr<ID3D12Resource>& texture,
-			const DirectX::ScratchImage& mipImages);
+	ComPtr<ID3D12Resource> CreateTextureResource(const DirectX::TexMetadata& metadata);
+
+	ComPtr<ID3D12Resource> UploadTextureData(
+		const ComPtr<ID3D12Resource>& texture,
+		const DirectX::ScratchImage& mipImages
+	);
 
 #pragma endregion
 
+	// --- アクセッサ ---
 	ID3D12Device* GetDevice() const{ return device.Get(); }
-	ID3D12GraphicsCommandList* GetCommandList() const{
-		return commandList.Get();
-	}
-
-	size_t GetSwapChainResourcesNum() const{
-		return swapChainResources.size();
-	}
-
+	ID3D12GraphicsCommandList* GetCommandList() const{ return commandList.Get(); }
 	ID3D12CommandQueue* GetCommandQueue() const{ return commandQueue.Get(); }
+	size_t GetSwapChainResourcesNum() const{ return swapChainResources.size(); }
 
 private:
 	WinAPI* winApi_ = nullptr;
 
+	// --- FPS制御 ---
+	std::chrono::steady_clock::time_point reference_;
+	void InitializeFixFPS();
+	void UpdateFixFPS();
+
+	// --- ヘルパー (static) ---
 	static D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(
-		const Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& descriptorHeap,
-		uint32_t descriptorSize,uint32_t index){
-		D3D12_CPU_DESCRIPTOR_HANDLE handleCPU =
-			descriptorHeap->GetCPUDescriptorHandleForHeapStart();
+		const ComPtr<ID3D12DescriptorHeap>& descriptorHeap,
+		uint32_t descriptorSize,
+		uint32_t index){
+		D3D12_CPU_DESCRIPTOR_HANDLE handleCPU = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
 		handleCPU.ptr += descriptorSize * index;
 		return handleCPU;
 	}
 
 	static D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDscriptorHandle(
-		const Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& descriptorHeap,
-		uint32_t descriptorSize,uint32_t index){
-		D3D12_GPU_DESCRIPTOR_HANDLE handleGPU =
-			descriptorHeap->GetGPUDescriptorHandleForHeapStart();
+		const ComPtr<ID3D12DescriptorHeap>& descriptorHeap,
+		uint32_t descriptorSize,
+		uint32_t index){
+		D3D12_GPU_DESCRIPTOR_HANDLE handleGPU = descriptorHeap->GetGPUDescriptorHandleForHeapStart();
 		handleGPU.ptr += descriptorSize * index;
 		return handleGPU;
 	}
-
-	void InitializeFixFPS();
-	void UpdateFixFPS();
-
-	std::chrono::steady_clock::time_point reference_;
 };

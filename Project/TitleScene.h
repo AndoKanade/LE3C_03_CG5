@@ -1,46 +1,46 @@
 #pragma once
-#include "BaseScene.h"
-#include "Obj3D.h"
-#include "Obj3DCommon.h"
-#include "Input.h"
 
-// ★追加：スマートポインタを使うために必須
-#include <memory>
+#include "BaseScene.h"
+#include"Math.h"
+#include <memory> // unique_ptr用
+#include <string> // 必要に応じて
+
+// --- 前方宣言 ---
+// ヘッダー内ではポインタとしてしか扱わないため、includeではなくclass宣言のみで済ませる
+// これによりコンパイル時間を短縮し、循環参照を防ぎます
+class Input;
+class Obj3D;
+class Obj3dCommon;
+class Sprite;
+class SpriteCommon;
 
 /// <summary>
 /// タイトル画面シーン
 /// </summary>
-/// 
-
-class SpriteCommon;
-class Sprite;
-
 class TitleScene : public BaseScene{
 public:
-	// コンストラクタ・デストラクタ
+	// --- コンストラクタ・デストラクタ ---
 	TitleScene();
 	~TitleScene() override;
 
-	// --- BaseSceneの純粋仮想関数をオーバーライド ---
+	// --- BaseScene オーバーライド ---
 	void Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommon* spriteCommon) override;
 	void Finalize() override;
 	void Update() override;
 	void Draw() override;
 
 private:
-	// --- システムポインタ (借りてくるもの) ---
-	// ※これらはMain側が持っているので、勝手にdeleteしないよう「生ポインタ」のままにする
+	// --- メンバ変数：外部依存 (借りてくるもの) ---
+	// ※これらはMain側(SceneManager等)が寿命を管理しているため、ここでは生ポインタで参照のみ保持する
 	Obj3dCommon* object3dCommon_ = nullptr;
 	Input* input_ = nullptr;
-	SpriteCommon* spriteCommon_ = nullptr; // 保存用
+	SpriteCommon* spriteCommon_ = nullptr;
 
-	// --- ゲームオブジェクト (このシーンが所有するもの) ---
-	// ★変更：所有権を持つものは unique_ptr にする！
-	// Obj3D* titleObject_ = nullptr;
+	// --- メンバ変数：内部リソース (所有するもの) ---
+	// ※このシーンが生成・管理し、シーン破棄とともに消えるものは unique_ptr で管理する
 	std::unique_ptr<Obj3D> titleObject_;
+	std::unique_ptr<Sprite> sprite_;
 
-	// Sprite* sprite_ = nullptr; 
-	std::unique_ptr<Sprite> sprite_; // 表示するスプライト
-
+	// --- メンバ変数：パラメータ ---
 	Vector4 spriteColor_ = {1.0f, 1.0f, 1.0f, 1.0f};
 };

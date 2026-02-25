@@ -1,12 +1,23 @@
 #pragma once
-#include "AbstractSceneFactory.h"
-#include <memory> // ★追加: unique_ptrを使うために必須
 
+#include "AbstractSceneFactory.h"
+#include <memory> // std::unique_ptr用
+#include <string> // std::string用
+
+/// <summary>
+/// 具体的なシーン生成工場クラス
+/// アプリケーション固有のシーン（TitleScene, GameSceneなど）を生成する役割を持ちます。
+/// </summary>
 class SceneFactory : public AbstractSceneFactory{
 public:
+    // デストラクタ
     virtual ~SceneFactory() = default;
 
-    // 親の関数をオーバーライドして実装
-    // ★変更: 戻り値を unique_ptr にする (親クラスと合わせる必須作業)
+    /// <summary>
+    /// シーン生成関数
+    /// 文字列(sceneName)に対応するシーンクラスを生成して返します。
+    /// </summary>
+    /// <param name="sceneName">生成するシーンの名前（例: "TITLE", "GAME"）</param>
+    /// <returns>生成されたシーンのユニークポインタ。該当なしの場合はnullptr</returns>
     std::unique_ptr<BaseScene> CreateScene(const std::string& sceneName) override;
 };

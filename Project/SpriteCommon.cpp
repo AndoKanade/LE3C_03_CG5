@@ -138,8 +138,8 @@ void SpriteCommon::CreatePipelineState(){
 
 #pragma region RasterrizerStateを生成する
 
-	resterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
-	resterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+	rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 #pragma endregion
 
 #pragma region shaderをコンパイルする
@@ -161,7 +161,7 @@ void SpriteCommon::CreatePipelineState(){
 	graphicsPipelineStateDesc.PS = {pixelShaderBlob->GetBufferPointer(),
 									pixelShaderBlob->GetBufferSize()};
 	graphicsPipelineStateDesc.BlendState = blendDesc;
-	graphicsPipelineStateDesc.RasterizerState = resterizerDesc;
+	graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;
 
 	// 書き込むRTVの情報
 	graphicsPipelineStateDesc.NumRenderTargets = 1;
