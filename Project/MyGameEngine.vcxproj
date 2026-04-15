@@ -20,6 +20,7 @@
     <ProjectGuid>{a777b021-11cc-44de-8f8b-6c6ab20b2fd9}</ProjectGuid>
     <RootNamespace>CG2Temprate</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>MyGameEngine</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -266,7 +267,7 @@ if not defined GITHUB_ACTIONS (
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="CG2_Temprate.rc" />
+    <ResourceCompile Include="MyGameEngine.rc" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="resource\shader\Particle.PS.hlsl">
