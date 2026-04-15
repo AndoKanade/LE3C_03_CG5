@@ -279,7 +279,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="CG2_Temprate.rc">
+	  <ResourceCompile Include="MyGameEngine.rc">
       <Filter>Resources</Filter>
     </ResourceCompile>
   </ItemGroup>
