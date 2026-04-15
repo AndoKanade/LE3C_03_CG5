@@ -99,9 +99,15 @@
     </Link>
     <PostBuildEvent>
       <Command>@echo off
+rem -- GitHub Actions環境ではスキップし、ローカル環境のみ実行する --
 if not defined GITHUB_ACTIONS (
-    copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)"
-    copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)"
+    rem -- ファイルが存在する場合のみコピーを実行する --
+    if exist "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" (
+        copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)"
+    )
+    if exist "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" (
+        copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)"
+    )
 )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -129,9 +135,15 @@ if not defined GITHUB_ACTIONS (
     </Link>
     <PostBuildEvent>
       <Command>@echo off
+rem -- GitHub Actions環境ではスキップし、ローカル環境のみ実行する --
 if not defined GITHUB_ACTIONS (
-    copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)"
-    copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)"
+    rem -- ファイルが存在する場合のみコピーを実行する --
+    if exist "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" (
+        copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)"
+    )
+    if exist "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" (
+        copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)"
+    )
 )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -161,9 +173,15 @@ if not defined GITHUB_ACTIONS (
     </Link>
     <PostBuildEvent>
       <Command>@echo off
+rem -- GitHub Actions環境ではスキップし、ローカル環境のみ実行する --
 if not defined GITHUB_ACTIONS (
-    copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)"
-    copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)"
+    rem -- ファイルが存在する場合のみコピーを実行する --
+    if exist "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" (
+        copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)"
+    )
+    if exist "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" (
+        copy /Y "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)"
+    )
 )</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
