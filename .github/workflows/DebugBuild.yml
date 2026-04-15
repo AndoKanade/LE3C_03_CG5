@@ -6,7 +6,7 @@ on:
    - master
 
 env:
- SOLUTION_FILE_PATH: project/CG2_Temprate.sln
+ SOLUTION_FILE_PATH: project/MyGameEngine.sln
  CONFIGURATION: Debug
  
 jobs:
