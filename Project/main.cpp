@@ -13,7 +13,7 @@ int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int){
 	while(true){
 		if(game->IsEndRequest()){
 			break;
-		}
+		}	
 
 		// 更新と描画
 		game->Update();
