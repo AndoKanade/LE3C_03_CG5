@@ -39,8 +39,8 @@ public: // --- デスクリプタ管理 ---
 	// 指定したインデックスのSRVをルートパラメータにセット
 	void SetGraphicsRootDescriptorTable(UINT RootParameterIndex,uint32_t srvIndex);
 
-	// テクスチャ用SRV生成 (Texture2D)
-	void CreateSRVTexture2D(uint32_t srvIndex,ID3D12Resource* pResource,DXGI_FORMAT Format,UINT MipLevels);
+	// テクスチャ用SRV生成 (Texture)
+	void CreateSRVTexture(uint32_t srvIndex,ID3D12Resource* pResource,DXGI_FORMAT Format,UINT MipLevels);
 
 	// 構造化バッファ用SRV生成 (StructuredBuffer)
 	void CreateSRVforStructuredBuffer(uint32_t srvIndex,ID3D12Resource* pResource,UINT numElements,UINT structureByteStride);
