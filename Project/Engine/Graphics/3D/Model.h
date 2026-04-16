@@ -6,7 +6,7 @@
 #include <vector>
 #include <d3d12.h>
 #include <wrl.h>
-#include"Math.h"
+#include"MyMath.h"
 
 
 class Model{

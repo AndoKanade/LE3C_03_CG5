@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BaseScene.h"
-#include"Math.h"
+#include"MyMath.h"
 #include <memory> // unique_ptr用
 #include <string> // 必要に応じて
 

@@ -11,7 +11,7 @@
 // --- DirectX / Math ---
 #include <d3d12.h>
 #include <wrl.h>
-#include "Math.h"
+#include "MyMath.h"
 
 // --- エンジン内ヘッダー ---
 #include "DXCommon.h"
