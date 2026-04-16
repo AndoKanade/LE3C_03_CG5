@@ -3,7 +3,7 @@
 #include "Model.h"
 #include "TextureManager.h"
 #include "Sprite.h"
-#include "Math.h"
+#include "MyMath.h"
 #include <cassert>
 #include "ModelManager.h"
 #include "Camera.h"
