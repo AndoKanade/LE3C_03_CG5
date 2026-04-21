@@ -78,7 +78,9 @@
     <FxCompile Include="Engine\Graphics\Shaders\Sprite.VS.hlsl">
       <Filter>Resources\shader</Filter>
     </FxCompile>
-    <None Include="Engine\Graphics\Shaders\Skybox.hlsli" />
+    <None Include="Engine\Graphics\Shaders\Skybox.hlsli">
+      <Filter>Resources\shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Base\D3DResourceLeakChecker.h">
@@ -177,7 +179,9 @@
     <ClInclude Include="Engine\Graphics\3D\Skybox.h">
       <Filter>ヘッダー ファイル\Engine\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Graphics\3D\SkyboxCommon.h" />
+    <ClInclude Include="Engine\Graphics\3D\SkyboxCommon.h">
+      <Filter>ヘッダー ファイル\Engine\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Base\DXCommon.cpp">
@@ -264,7 +268,9 @@
     <ClCompile Include="Engine\Graphics\3D\Skybox.cpp">
       <Filter>ソース ファイル\Engine\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Graphics\3D\SkyboxCommon.cpp" />
+    <ClCompile Include="Engine\Graphics\3D\SkyboxCommon.cpp">
+      <Filter>ソース ファイル\Engine\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource\MyGameEngine.rc">
@@ -272,7 +278,11 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Engine\Graphics\Shaders\Skybox.PS.hlsl" />
-    <FxCompile Include="Engine\Graphics\Shaders\Skybox.VS.hlsl" />
+    <FxCompile Include="Engine\Graphics\Shaders\Skybox.PS.hlsl">
+      <Filter>Resources\shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Engine\Graphics\Shaders\Skybox.VS.hlsl">
+      <Filter>Resources\shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
