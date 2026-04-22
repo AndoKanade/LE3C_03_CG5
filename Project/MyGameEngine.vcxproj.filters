@@ -84,19 +84,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Engine\Graphics\Shaders\Sprite.hlsli">
+    <None Include="Engine\Graphics\Shaders\Sprite\Sprite.hlsli">
       <Filter>Resources\shader\Sprite</Filter>
     </None>
-    <None Include="Engine\Graphics\Shaders\Object3d.hlsli">
+    <None Include="Engine\Graphics\Shaders\Obj3D\Object3d.hlsli">
       <Filter>Resources\shader\Obj3D</Filter>
     </None>
-    <FxCompile Include="Engine\Graphics\Shaders\Particle.PS.hlsl">
+    <FxCompile Include="Engine\Graphics\Shaders\Particle\Particle.PS.hlsl">
       <Filter>Resources\shader\Particle</Filter>
     </FxCompile>
-    <None Include="Engine\Graphics\Shaders\Skybox.hlsli">
+    <None Include="Engine\Graphics\Shaders\Skybox\Skybox.hlsli">
       <Filter>Resources\shader\Skybox</Filter>
     </None>
-    <None Include="Engine\Graphics\Shaders\PostProcess.hlsli">
+    <None Include="Engine\Graphics\Shaders\PostProcess\PostProcess.hlsli">
       <Filter>Resources\shader\PostProcess</Filter>
     </None>
   </ItemGroup>
@@ -308,36 +308,39 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Engine\Graphics\Shaders\Sprite.PS.hlsl">
+    <FxCompile Include="Engine\Graphics\Shaders\Sprite\Sprite.PS.hlsl">
       <Filter>Resources\shader\Sprite</Filter>
     </FxCompile>
-    <FxCompile Include="Engine\Graphics\Shaders\Sprite.VS.hlsl">
+    <FxCompile Include="Engine\Graphics\Shaders\Sprite\Sprite.VS.hlsl">
       <Filter>Resources\shader\Sprite</Filter>
     </FxCompile>
-    <FxCompile Include="Engine\Graphics\Shaders\Object3d.PS.hlsl">
+    <FxCompile Include="Engine\Graphics\Shaders\Obj3D\Object3d.PS.hlsl">
       <Filter>Resources\shader\Obj3D</Filter>
     </FxCompile>
-    <FxCompile Include="Engine\Graphics\Shaders\Object3d.VS.hlsl">
+    <FxCompile Include="Engine\Graphics\Shaders\Obj3D\Object3d.VS.hlsl">
       <Filter>Resources\shader\Obj3D</Filter>
     </FxCompile>
-    <FxCompile Include="Engine\Graphics\Shaders\Particle.VS.hlsl">
+    <FxCompile Include="Engine\Graphics\Shaders\Particle\Particle.VS.hlsl">
       <Filter>Resources\shader\Particle</Filter>
     </FxCompile>
-    <FxCompile Include="Engine\Graphics\Shaders\Skybox.PS.hlsl">
+    <FxCompile Include="Engine\Graphics\Shaders\Skybox\Skybox.PS.hlsl">
       <Filter>Resources\shader\Skybox</Filter>
     </FxCompile>
-    <FxCompile Include="Engine\Graphics\Shaders\Skybox.VS.hlsl">
+    <FxCompile Include="Engine\Graphics\Shaders\Skybox\Skybox.VS.hlsl">
       <Filter>Resources\shader\Skybox</Filter>
     </FxCompile>
-    <FxCompile Include="Engine\Graphics\Shaders\PostProcess.PS.hlsl">
+    <FxCompile Include="Engine\Graphics\Shaders\PostProcess\PostProcess.PS.hlsl">
       <Filter>Resources\shader\PostProcess</Filter>
     </FxCompile>
-    <FxCompile Include="Engine\Graphics\Shaders\PostProcess.VS.hlsl">
+    <FxCompile Include="Engine\Graphics\Shaders\PostProcess\PostProcess.VS.hlsl">
+      <Filter>Resources\shader\PostProcess</Filter>
+    </FxCompile>
+    <FxCompile Include="Engine\Graphics\Shaders\PostProcess\Vignette.PS.hlsl">
       <Filter>Resources\shader\PostProcess</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Engine\Graphics\Shaders\Particle.hlsli">
+    <None Include="Engine\Graphics\Shaders\Particle\Particle.hlsli">
       <Filter>Resources\shader\Particle</Filter>
     </None>
   </ItemGroup>
