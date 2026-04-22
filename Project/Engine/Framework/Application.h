@@ -1,5 +1,6 @@
 #pragma once
 #include "Framework.h"
+#include "RenderTexture.h"
 #include "SceneManager.h"
 
 /// <summary>
@@ -44,4 +45,7 @@ public:
 	/// 毎フレーム呼ばれ、画面への描画コマンドを発行します。
 	/// </summary>
 	void Draw() override;
+
+private:
+	std::unique_ptr<RenderTexture> renderTexture_;
 };

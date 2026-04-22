@@ -182,6 +182,9 @@
     <ClInclude Include="Engine\Graphics\3D\SkyboxCommon.h">
       <Filter>ヘッダー ファイル\Engine\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Graphics\Effect\RenderTexture.h">
+      <Filter>ヘッダー ファイル\Engine\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Base\DXCommon.cpp">
@@ -269,6 +272,9 @@
       <Filter>ソース ファイル\Engine\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Graphics\3D\SkyboxCommon.cpp">
+      <Filter>ソース ファイル\Engine\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Effect\RenderTexture.cpp">
       <Filter>ソース ファイル\Engine\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
