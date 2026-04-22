@@ -8,10 +8,10 @@ void RenderTexture::Create(
 	DXGI_FORMAT format,
 	const Vector4& clearColor,
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle,
-	D3D12_CPU_DESCRIPTOR_HANDLE srvHandleCpu, // 追加
-	D3D12_GPU_DESCRIPTOR_HANDLE srvHandleGpu  // 追加
+	D3D12_CPU_DESCRIPTOR_HANDLE srvHandleCpu,
+	D3D12_GPU_DESCRIPTOR_HANDLE srvHandleGpu
 ){
-	// --- 1. ResourceDescの設定 ---
+	// リソース設定
 	D3D12_RESOURCE_DESC resourceDesc{};
 	resourceDesc.Width = width;
 	resourceDesc.Height = height;
@@ -22,11 +22,11 @@ void RenderTexture::Create(
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
-	// --- 2. HeapPropertiesの設定 ---
+	// ヒープ設定
 	D3D12_HEAP_PROPERTIES heapProperties{};
 	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
 
-	// --- 3. クリア値の設定 ---
+	// クリア値設定
 	D3D12_CLEAR_VALUE clearValue{};
 	clearValue.Format = format;
 	clearValue.Color[0] = clearColor.x;
@@ -34,7 +34,7 @@ void RenderTexture::Create(
 	clearValue.Color[2] = clearColor.z;
 	clearValue.Color[3] = clearColor.w;
 
-	// --- 4. リソースの生成 ---
+	// リソース生成
 	HRESULT hr = device->CreateCommittedResource(
 		&heapProperties,
 		D3D12_HEAP_FLAG_NONE,
@@ -45,7 +45,7 @@ void RenderTexture::Create(
 	);
 	assert(SUCCEEDED(hr));
 
-	// --- 5. RTVの作成 ---
+	// RTV作成
 	rtvHandle_ = rtvHandle;
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
 	rtvDesc.Format = format;
@@ -53,9 +53,9 @@ void RenderTexture::Create(
 
 	device->CreateRenderTargetView(resource_.Get(),&rtvDesc,rtvHandle_);
 
-	// --- 6. SRVの作成 (追加) ---
-	srvHandleCpu_ = srvHandleCpu; // メンバに保存
-	srvHandleGpu_ = srvHandleGpu; // メンバに保存
+	// SRV作成
+	srvHandleCpu_ = srvHandleCpu;
+	srvHandleGpu_ = srvHandleGpu;
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = format;

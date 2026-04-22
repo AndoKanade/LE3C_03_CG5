@@ -1,51 +1,35 @@
 #pragma once
 #include "Framework.h"
 #include "RenderTexture.h"
+#include "PostProcess.h"
 #include "SceneManager.h"
 
 /// <summary>
 /// アプリケーションクラス
-/// Frameworkクラスを継承し、このゲーム固有の処理（シーン管理やループ動作）を実装します。
+/// Frameworkクラスを継承し、ゲーム固有の処理を実装します。
 /// </summary>
 class Application : public Framework{
 public:
 	// --- コンストラクタ・デストラクタ ---
-
-	// コンストラクタ
 	Application();
-
-	// デストラクタ
-	// 基底クラスの仮想デストラクタをオーバーライドします
 	~Application() override;
 
-	// --- Frameworkの純粋仮想関数をオーバーライド ---
+	// --- 基底クラスの純粋仮想関数をオーバーライド ---
 
-	/// <summary>
-	/// 初期化処理
-	/// アプリケーション起動時に一度だけ呼ばれます。
-	/// ウィンドウ生成後のリソース読み込みや、最初のシーン設定を行います。
-	/// </summary>
+	// 初期化処理
 	void Initialize() override;
 
-	/// <summary>
-	/// 終了処理
-	/// アプリケーション終了時に一度だけ呼ばれます。
-	/// 確保したメモリやリソースの解放を行います。
-	/// </summary>
+	// 終了処理
 	void Finalize() override;
 
-	/// <summary>
-	/// 更新処理
-	/// 毎フレーム呼ばれ、ゲームの計算や入力処理を行います。
-	/// </summary>
+	// 更新処理
 	void Update() override;
 
-	/// <summary>
-	/// 描画処理
-	/// 毎フレーム呼ばれ、画面への描画コマンドを発行します。
-	/// </summary>
+	// 描画処理
 	void Draw() override;
 
 private:
+	// --- メンバ変数 ---
 	std::unique_ptr<RenderTexture> renderTexture_;
+	std::unique_ptr<PostProcess> postProcess_;
 };
