@@ -56,8 +56,8 @@ void PostProcess::CreatePipelineState(ID3D12Device* device,DXCommon* dxCommon){
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 
 	// シェーダーのコンパイルとセット
-	auto vsBlob = dxCommon->CompileShader(L"Engine/Graphics/Shaders/PostProcess.VS.hlsl",L"vs_6_0");
-	auto psBlob = dxCommon->CompileShader(L"Engine/Graphics/Shaders/PostProcess.PS.hlsl",L"ps_6_0");
+	auto vsBlob = dxCommon->CompileShader(L"Engine/Graphics/Shaders/PostProcess/PostProcess.VS.hlsl",L"vs_6_0");
+	auto psBlob = dxCommon->CompileShader(L"Engine/Graphics/Shaders/PostProcess/Vignette.PS.hlsl",L"ps_6_0");
 	psoDesc.VS = {vsBlob->GetBufferPointer(), vsBlob->GetBufferSize()};
 	psoDesc.PS = {psBlob->GetBufferPointer(), psBlob->GetBufferSize()};
 
