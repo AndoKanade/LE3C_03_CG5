@@ -1,4 +1,4 @@
-#include "CopyImage.hlsli"
+#include "PostProcess.hlsli"
 
 // 頂点数
 static const uint32_t kNumVertex = 3;
