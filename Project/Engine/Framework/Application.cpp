@@ -1,85 +1,92 @@
 #include "Application.h"
 #include "SceneFactory.h"
-#include "SceneManager.h"
-#include "ImGuiManager.h" // 必要に応じてinclude
+#include "SrvManager.h"
 
-// -------------------------------------------------
-// コンストラクタ・デストラクタ
-// -------------------------------------------------
 Application::Application() = default;
 Application::~Application() = default;
 
-// -------------------------------------------------
-// 初期化処理
-// -------------------------------------------------
 void Application::Initialize(){
-	// 1. 基底クラス(Framework)の初期化
-	// ウィンドウ生成、DirectX初期化、Input、SpriteCommon等の生成が行われます
+	// 1. 基底クラスの初期化
 	Framework::Initialize();
 
-	// 2. シーン工場の生成
-	// このアプリケーション専用のシーン生成工場を作成します
+	// 2. RenderTextureの生成と初期化
+	renderTexture_ = std::make_unique<RenderTexture>();
+
+	// RTVハンドルの取得 (バックバッファ2つの次、インデックス2を使用)
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = dxCommon_->rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	rtvHandle.ptr += (size_t)dxCommon_->descriptorSizeRTV * 2;
+
+	// ポストプロセス初期化
+	postProcess_ = std::make_unique<PostProcess>();
+	postProcess_->Initialize(dxCommon_.get());
+
+	// SRVハンドルの取得 (SrvManagerから空きを確保)
+	uint32_t srvIndex = SrvManager::GetInstance()->Allocate();
+	D3D12_CPU_DESCRIPTOR_HANDLE srvHandleCpu = SrvManager::GetInstance()->GetCPUDescriptorHandle(srvIndex);
+	D3D12_GPU_DESCRIPTOR_HANDLE srvHandleGpu = SrvManager::GetInstance()->GetGPUDescriptorHandle(srvIndex);
+
+	renderTexture_->Create(
+		dxCommon_->GetDevice(),
+		WinAPI::kClientWidth,
+		WinAPI::kCliantHeight,
+		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+		{0.1f, 0.25f, 0.5f, 1.0f},
+		rtvHandle,
+		srvHandleCpu,
+		srvHandleGpu
+	);
+
+	// 3. シーン系の初期化
 	sceneFactory_ = std::make_unique<SceneFactory>();
-
-	// 3. シーンマネージャのセットアップ
 	SceneManager* sceneManager = SceneManager::GetInstance();
-
-	// シーン生成工場をセット (AbstractSceneFactoryインターフェースとして渡す)
 	sceneManager->SetFactory(sceneFactory_.get());
-
-	// 各シーンで利用する共通システムへのポインタをセット
-	// (Frameworkが保持している unique_ptr から生ポインタを取り出して渡す)
 	sceneManager->SetCommonPtr(object3dCommon_.get(),input_.get(),spriteCommon_.get());
-
-	// 4. 最初のシーンを開始
-	// ここで指定したシーンからゲームが始まります
 	sceneManager->ChangeScene("TITLE");
 }
 
-// -------------------------------------------------
-// 終了処理
-// -------------------------------------------------
 void Application::Finalize(){
-	// 1. 基底クラスの終了処理
 	Framework::Finalize();
-
-	// ※ sceneFactory_ 等のメンバ変数は unique_ptr なので、
-	// デストラクタで自動的にメモリ解放されます。明示的な delete は不要です。
 }
 
-// -------------------------------------------------
-// 更新処理
-// -------------------------------------------------
 void Application::Update(){
-	// 1. 基底クラスの更新
-	// ウィンドウメッセージ処理、入力更新、シーンマネージャの更新などはここで行われます
 	Framework::Update();
 }
 
-// -------------------------------------------------
-// 描画処理
-// -------------------------------------------------
 void Application::Draw(){
-	// 1. 描画前処理 (DirectXの描画準備)
-	dxCommon_->PreDraw();
+	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommandList();
+
+	// --- パス1：RenderTextureへの描画 ---
+	dxCommon_->PreDraw(renderTexture_.get());
 	SrvManager::GetInstance()->PreDraw();
 
-	// 2. 3Dオブジェクト描画の共通設定
-	// ルートシグネチャやパイプラインステートなど、3D描画に必要な設定をコマンドリストに積みます
 	if(object3dCommon_){
 		object3dCommon_->Draw();
 	}
-
-	// 3. 現在のシーンの描画
-	// 各シーン内の背景(Sprite)や3Dモデルの描画コマンドを発行します
 	SceneManager::GetInstance()->Draw();
 
-	// 4. UI描画 (ImGui)
-	// デバッグビルド時のみ有効にするのが一般的です
+	// --- パス2：Swapchainへの描画 ---
+	// 描画先をバックバッファに切り替え
+	dxCommon_->PreDraw(nullptr);
+
+	// RenderTextureをテクスチャとして使うためのバリア (RT -> SRV)
+	D3D12_RESOURCE_BARRIER barrier{};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Transition.pResource = renderTexture_->GetResource();
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	commandList->ResourceBarrier(1,&barrier);
+
+	// 全画面三角形を描画
+	postProcess_->Draw(commandList,renderTexture_->GetSrvHandleGpu());
+
+	// 次のフレームのためにバリアを戻す (SRV -> RT)
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	commandList->ResourceBarrier(1,&barrier);
+
 #ifdef _DEBUG
 	ImGuiManager::GetInstance()->Draw();
 #endif
 
-	// 5. 描画後処理 (画面のフリップなど)
 	dxCommon_->PostDraw();
 }

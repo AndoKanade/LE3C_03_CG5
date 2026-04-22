@@ -81,6 +81,9 @@
     <None Include="Engine\Graphics\Shaders\Skybox.hlsli">
       <Filter>Resources\shader</Filter>
     </None>
+    <None Include="Engine\Graphics\Shaders\CopyImage.hlsli">
+      <Filter>Resources\shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Base\D3DResourceLeakChecker.h">
@@ -182,6 +185,10 @@
     <ClInclude Include="Engine\Graphics\3D\SkyboxCommon.h">
       <Filter>ヘッダー ファイル\Engine\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Graphics\Effect\RenderTexture.h">
+      <Filter>ヘッダー ファイル\Engine\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Graphics\Effect\PostProcess.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Base\DXCommon.cpp">
@@ -271,6 +278,10 @@
     <ClCompile Include="Engine\Graphics\3D\SkyboxCommon.cpp">
       <Filter>ソース ファイル\Engine\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Graphics\Effect\RenderTexture.cpp">
+      <Filter>ソース ファイル\Engine\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Graphics\Effect\PostProcess.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource\MyGameEngine.rc">
@@ -282,6 +293,12 @@
       <Filter>Resources\shader</Filter>
     </FxCompile>
     <FxCompile Include="Engine\Graphics\Shaders\Skybox.VS.hlsl">
+      <Filter>Resources\shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Engine\Graphics\Shaders\CopyImage.PS.hlsl">
+      <Filter>Resources\shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Engine\Graphics\Shaders\CopyImage.VS.hlsl">
       <Filter>Resources\shader</Filter>
     </FxCompile>
   </ItemGroup>

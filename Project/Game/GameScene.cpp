@@ -146,7 +146,7 @@ void GameScene::Draw(){
 		sphereObj_->Draw();
 	}
 
-	if(skybox_){
-		skybox_->Draw();
-	}
+	//if(skybox_){
+	//	skybox_->Draw();
+	//}
 }
