@@ -2,7 +2,14 @@
 #include "SceneFactory.h"
 #include "SrvManager.h"
 
-Application::Application() = default;
+// 静的メンバ変数の実体定義
+Application* Application::instance_ = nullptr;
+
+Application::Application(){
+	// インスタンスを登録 (GetInstance用)
+	instance_ = this;
+}
+
 Application::~Application() = default;
 
 void Application::Initialize(){
@@ -76,7 +83,7 @@ void Application::Draw(){
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	commandList->ResourceBarrier(1,&barrier);
 
-	// 全画面三角形を描画
+	// ポストプロセス描画
 	postProcess_->Draw(commandList,renderTexture_->GetSrvHandleGpu());
 
 	// 次のフレームのためにバリアを戻す (SRV -> RT)
@@ -89,4 +96,20 @@ void Application::Draw(){
 #endif
 
 	dxCommon_->PostDraw();
+}
+
+void Application::ShowPostProcessUI(){
+#ifdef _DEBUG
+	ImGui::Begin("PostProcess Settings");
+
+	static int k = 1;
+	// IDの衝突を避けるために ##PostProcess を付与
+	if(ImGui::SliderInt("Blur Strength##PostProcess",&k,0,5)){
+		if(postProcess_){
+			postProcess_->SetKernelSize(k);
+		}
+	}
+
+	ImGui::End();
+#endif
 }

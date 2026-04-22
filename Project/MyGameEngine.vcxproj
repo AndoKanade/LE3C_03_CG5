@@ -194,6 +194,14 @@ if not defined GITHUB_ACTIONS if exist "$(WindowsSdkDir)bin\$(TargetPlatformVers
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Engine\Graphics\Shaders\PostProcess\Boxfilter.PS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Development|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="Engine\Graphics\Shaders\PostProcess\PostProcess.PS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Development|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>

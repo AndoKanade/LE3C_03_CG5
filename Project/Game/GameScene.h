@@ -10,6 +10,7 @@ class ParticleEmitter;
 class SpriteCommon;
 class Skybox;
 class SkyboxCommon;
+class Application;
 
 class GameScene : public BaseScene{
 public:
@@ -26,6 +27,7 @@ private:
 	Obj3dCommon* object3dCommon_ = nullptr;
 	Input* input_ = nullptr;
 	SpriteCommon* spriteCommon_ = nullptr;
+	Application* app_ = nullptr;
 
 	// 内部リソース
 	std::shared_ptr<Obj3D> planeObj_;

@@ -12,6 +12,7 @@
 #include "Obj3dCommon.h"
 #include "ParticleEmitter.h"
 #include "SpriteCommon.h"
+#include "Application.h"
 
 namespace{
 	const std::string kTextureChecker = "resource/uvChecker.png";
@@ -27,7 +28,6 @@ namespace{
 }
 
 GameScene::GameScene() = default;
-
 GameScene::~GameScene() = default;
 
 void GameScene::Initialize(Obj3dCommon* object3dCommon,Input* input,SpriteCommon* spriteCommon){
@@ -105,6 +105,7 @@ void GameScene::Update(){
 	}
 
 #ifdef USE_IMGUI
+	// --- シーン独自のデバッグUI ---
 	Camera* activeCamera = CameraManager::GetInstance()->GetActiveCamera();
 	if(activeCamera){
 		ImGui::Begin("GameScene Debug");
@@ -136,6 +137,9 @@ void GameScene::Update(){
 
 		ImGui::End();
 	}
+
+	// --- アプリケーション共通のポストプロセスUI ---
+	Application::GetInstance()->ShowPostProcessUI();
 #endif
 }
 
@@ -146,7 +150,7 @@ void GameScene::Draw(){
 		sphereObj_->Draw();
 	}
 
-	//if(skybox_){
+	// if(skybox_){
 	//	skybox_->Draw();
-	//}
+	// }
 }
