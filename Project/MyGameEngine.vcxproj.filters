@@ -338,6 +338,9 @@
     <FxCompile Include="Engine\Graphics\Shaders\PostProcess\Vignette.PS.hlsl">
       <Filter>Resources\shader\PostProcess</Filter>
     </FxCompile>
+    <FxCompile Include="Engine\Graphics\Shaders\PostProcess\Boxfilter.PS.hlsl">
+      <Filter>Resources\shader\PostProcess</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Graphics\Shaders\Particle\Particle.hlsli">

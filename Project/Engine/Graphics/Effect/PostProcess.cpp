@@ -4,24 +4,34 @@ void PostProcess::Initialize(DXCommon* dxCommon){
 	// RootSignatureを先に生成してからPipelineStateを作る
 	CreateRootSignature(dxCommon->GetDevice());
 	CreatePipelineState(dxCommon->GetDevice(),dxCommon);
+
+	constBuff_ = dxCommon->CreateBufferResource(sizeof(PostProcessData));
+	constBuff_->Map(0,nullptr,reinterpret_cast<void**>(&constMap_));
+	constMap_->kernelSize = 1;
 }
 
 void PostProcess::CreateRootSignature(ID3D12Device* device){
 	HRESULT hr;
 
-	// デスクリプタレンジの設定 (t0: Texture)
+	// ルートパラメータの設定 (3つのパラメータを使用)
+	D3D12_ROOT_PARAMETER rootParameters[2] = {};
+
+	// 0: DescriptorTable (SRV用: register(t0))
 	D3D12_DESCRIPTOR_RANGE descriptorRange[1] = {};
 	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRange[0].NumDescriptors = 1;
 	descriptorRange[0].BaseShaderRegister = 0;
 	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	// ルートパラメータの設定
-	D3D12_ROOT_PARAMETER rootParameters[1] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[0].DescriptorTable.pDescriptorRanges = &descriptorRange[0];
 	rootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	// 1: CBV (ConstantBuffer用: register(b0))
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParameters[1].Descriptor.ShaderRegister = 0;
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	// 静的サンプラーの設定 (s0: Sampler)
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
@@ -35,7 +45,7 @@ void PostProcess::CreateRootSignature(ID3D12Device* device){
 	// ルートシグネチャの構成
 	D3D12_ROOT_SIGNATURE_DESC description = {};
 	description.pParameters = rootParameters;
-	description.NumParameters = 1;
+	description.NumParameters = _countof(rootParameters);
 	description.pStaticSamplers = staticSamplers;
 	description.NumStaticSamplers = 1;
 	description.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -57,7 +67,7 @@ void PostProcess::CreatePipelineState(ID3D12Device* device,DXCommon* dxCommon){
 
 	// シェーダーのコンパイルとセット
 	auto vsBlob = dxCommon->CompileShader(L"Engine/Graphics/Shaders/PostProcess/PostProcess.VS.hlsl",L"vs_6_0");
-	auto psBlob = dxCommon->CompileShader(L"Engine/Graphics/Shaders/PostProcess/Vignette.PS.hlsl",L"ps_6_0");
+	auto psBlob = dxCommon->CompileShader(L"Engine/Graphics/Shaders/PostProcess/Boxfilter.PS.hlsl",L"ps_6_0");
 	psoDesc.VS = {vsBlob->GetBufferPointer(), vsBlob->GetBufferSize()};
 	psoDesc.PS = {psBlob->GetBufferPointer(), psBlob->GetBufferSize()};
 
@@ -87,9 +97,14 @@ void PostProcess::Draw(ID3D12GraphicsCommandList* commandList,D3D12_GPU_DESCRIPT
 	// 各種リソースのセット
 	commandList->SetPipelineState(pipelineState_.Get());
 	commandList->SetGraphicsRootSignature(rootSignature_.Get());
+
+	// 0番にSRV（テクスチャ）をセット
 	commandList->SetGraphicsRootDescriptorTable(0,textureHandle);
 
-	// トポロジーをセットして頂点バッファなしで描画
+	// 1番にCBV（定数バッファ）をセット
+	commandList->SetGraphicsRootConstantBufferView(1,constBuff_->GetGPUVirtualAddress());
+
+	// トポロジーをセットして描画
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	commandList->DrawInstanced(3,1,0,0);
 }

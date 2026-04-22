@@ -3,6 +3,7 @@
 #include "RenderTexture.h"
 #include "PostProcess.h"
 #include "SceneManager.h"
+#include <memory>
 
 /// <summary>
 /// アプリケーションクラス
@@ -14,22 +15,21 @@ public:
 	Application();
 	~Application() override;
 
-	// --- 基底クラスの純粋仮想関数をオーバーライド ---
+	// --- メンバ関数 ---
+	void Initialize() override; // 初期化処理
+	void Finalize() override;   // 終了処理
+	void Update() override;     // 更新処理
+	void Draw() override;       // 描画処理
 
-	// 初期化処理
-	void Initialize() override;
-
-	// 終了処理
-	void Finalize() override;
-
-	// 更新処理
-	void Update() override;
-
-	// 描画処理
-	void Draw() override;
+	// --- デバッグ・アクセサ ---
+	static Application* GetInstance(){ return instance_; }
+	void ShowPostProcessUI();
 
 private:
-	// --- メンバ変数 ---
+	// 静的メンバ変数 (シングルトン用)
+	static Application* instance_;
+
+	// --- メンバリソース ---
 	std::unique_ptr<RenderTexture> renderTexture_;
 	std::unique_ptr<PostProcess> postProcess_;
 };
