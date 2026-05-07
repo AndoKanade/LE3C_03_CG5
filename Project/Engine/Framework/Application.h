@@ -32,4 +32,5 @@ private:
 	// --- メンバリソース ---
 	std::unique_ptr<RenderTexture> renderTexture_;
 	std::unique_ptr<PostProcess> postProcess_;
+	PostProcess::Type currentPPType_ = PostProcess::Type::PostProcess;
 };
