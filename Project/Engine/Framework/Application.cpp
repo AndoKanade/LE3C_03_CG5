@@ -6,32 +6,32 @@
 Application* Application::instance_ = nullptr;
 
 Application::Application(){
-	// インスタンスを登録 (GetInstance用)
-	instance_ = this;
+	instance_ = this; // シングルトンインスタンスの登録
 }
 
 Application::~Application() = default;
 
+// --- 初期化処理 ---
 void Application::Initialize(){
 	// 1. 基底クラスの初期化
 	Framework::Initialize();
 
-	// 2. RenderTextureの生成と初期化
+	// 2. ポストプロセス用リソースの初期化
+	postProcess_ = std::make_unique<PostProcess>();
+	postProcess_->Initialize(dxCommon_.get());
+
 	renderTexture_ = std::make_unique<RenderTexture>();
 
 	// RTVハンドルの取得 (バックバッファ2つの次、インデックス2を使用)
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = dxCommon_->rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	rtvHandle.ptr += (size_t)dxCommon_->descriptorSizeRTV * 2;
 
-	// ポストプロセス初期化
-	postProcess_ = std::make_unique<PostProcess>();
-	postProcess_->Initialize(dxCommon_.get());
-
 	// SRVハンドルの取得 (SrvManagerから空きを確保)
 	uint32_t srvIndex = SrvManager::GetInstance()->Allocate();
 	D3D12_CPU_DESCRIPTOR_HANDLE srvHandleCpu = SrvManager::GetInstance()->GetCPUDescriptorHandle(srvIndex);
 	D3D12_GPU_DESCRIPTOR_HANDLE srvHandleGpu = SrvManager::GetInstance()->GetGPUDescriptorHandle(srvIndex);
 
+	// レンダーテクスチャ生成
 	renderTexture_->Create(
 		dxCommon_->GetDevice(),
 		WinAPI::kClientWidth,
@@ -59,10 +59,11 @@ void Application::Update(){
 	Framework::Update();
 }
 
+// --- 描画処理 ---
 void Application::Draw(){
 	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommandList();
 
-	// --- パス1：RenderTextureへの描画 ---
+	// --- パス1：RenderTextureへの描画 (オフスクリーン) ---
 	dxCommon_->PreDraw(renderTexture_.get());
 	SrvManager::GetInstance()->PreDraw();
 
@@ -71,11 +72,10 @@ void Application::Draw(){
 	}
 	SceneManager::GetInstance()->Draw();
 
-	// --- パス2：Swapchainへの描画 ---
-	// 描画先をバックバッファに切り替え
-	dxCommon_->PreDraw(nullptr);
+	// --- パス2：Swapchainへの描画 (ポストプロセス適用) ---
+	dxCommon_->PreDraw(nullptr); // 描画先をバックバッファに切り替え
 
-	// RenderTextureをテクスチャとして使うためのバリア (RT -> SRV)
+	// 1. RenderTextureの状態を 描画用(RT) から テクスチャ用(SRV) へ遷移
 	D3D12_RESOURCE_BARRIER barrier{};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	barrier.Transition.pResource = renderTexture_->GetResource();
@@ -83,10 +83,10 @@ void Application::Draw(){
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	commandList->ResourceBarrier(1,&barrier);
 
-	// ポストプロセス描画
-	postProcess_->Draw(commandList,renderTexture_->GetSrvHandleGpu());
+	// 2. ポストプロセス実行
+	postProcess_->Draw(commandList,renderTexture_->GetSrvHandleGpu(),currentPPType_);
 
-	// 次のフレームのためにバリアを戻す (SRV -> RT)
+	// 3. 次フレームのために状態を 描画用(RT) に戻しておく
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	commandList->ResourceBarrier(1,&barrier);
@@ -98,14 +98,38 @@ void Application::Draw(){
 	dxCommon_->PostDraw();
 }
 
+// --- デバッグUI表示 ---
 void Application::ShowPostProcessUI(){
 #ifdef _DEBUG
 	ImGui::Begin("PostProcess Settings");
 
-	static int k = 1;
-	// IDの衝突を避けるために ##PostProcess を付与
-	if(ImGui::SliderInt("Blur Strength##PostProcess",&k,0,5)){
-		if(postProcess_){
+	// フィルター切り替え
+	const char* typeNames[] = {"Default(PostProcess)", "BoxFilter", "Grayscale", "Vignette"};
+	int currentIdx = static_cast<int>(currentPPType_);
+
+	if(ImGui::Combo("Filter Type",&currentIdx,typeNames,IM_ARRAYSIZE(typeNames))){
+		currentPPType_ = static_cast<PostProcess::Type>(currentIdx);
+	}
+
+	ImGui::Separator();
+
+	// パラメータ調整
+	if(currentPPType_ == PostProcess::Type::Vignette){
+		ImGui::Text("Vignette Settings");
+
+		static float intensity = 0.5f;
+		if(ImGui::DragFloat("Intensity",&intensity,0.01f,0.0f,1.0f)){
+			postProcess_->SetVignetteIntensity(intensity);
+		}
+
+		static float scale = 0.8f;
+		// 修正：SetKernelSize になっていたのを SetVignetteScale に変更
+		if(ImGui::DragFloat("Scale",&scale,0.01f,0.0f,2.0f)){
+			postProcess_->SetVignetteScale(scale);
+		}
+	} else if(currentPPType_ == PostProcess::Type::BoxFilter){
+		static int k = 1;
+		if(ImGui::SliderInt("Kernel Size (k)##PostProcess",&k,0,5)){
 			postProcess_->SetKernelSize(k);
 		}
 	}

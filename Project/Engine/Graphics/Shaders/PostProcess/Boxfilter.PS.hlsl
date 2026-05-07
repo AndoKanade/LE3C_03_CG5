@@ -1,47 +1,52 @@
 #include "PostProcess.hlsli"
 
-// C++から送られてくるデータ
-struct PostProcessData
+// --- 定数バッファ (register b1) ---
+cbuffer PostProcessConfig : register(b1)
 {
-    int32_t kernelSize; // kの値 (1なら3x3, 2なら5x5)
+    int32_t gKernelSize; // 使用する変数を一番上に配置
+    float gVignetteIntensity; // BoxFilter不使用
+    float gVignetteScale; // BoxFilter不使用
+    float gPadding; // パディング
 };
 
-ConstantBuffer<PostProcessData> gData : register(b0); // b0を使用
+// --- リソース (Texture & Sampler) ---
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
 
+// --- 構造体 ---
 struct PixelShaderOutput
 {
     float32_t4 color : SV_TARGET0;
 };
 
+// --- メイン関数 ---
 PixelShaderOutput main(VertexShaderOutput input)
 {
+    PixelShaderOutput output;
+
+    // 1. テクスチャサイズから1ピクセルあたりのUV移動量を計算
     uint32_t width, height;
     gTexture.GetDimensions(width, height);
-    float32_t2 uvStepSize = float32_t2(rcp(float32_t(width)), rcp(float32_t(height)));
+    float32_t2 uvStepSize = rcp(float32_t2(width, height));
 
-    PixelShaderOutput output;
-    float32_t3 sum = float32_t3(0.0f, 0.0f, 0.0f);
-    
-    // カーネルサイズの取得 (ImGuiでいじる変数)
-    int32_t k = gData.kernelSize;
-    
-    // 合計ピクセル数を計算 (k=1なら9, k=2なら25)
-    float32_t numPixels = float32_t((2 * k + 1) * (2 * k + 1));
+    // 2. 周辺ピクセルの色の合計を求める
+    float32_t3 colorSum = (float32_t3) 0.0f;
+    int32_t k = gKernelSize;
 
-    // 動的なループ
-    for (int32_t i = -k; i <= k; ++i)
+    // 動的な二重ループで周囲 (2k+1)x(2k+1) 範囲を走査
+    for (int32_t x = -k; x <= k; ++x)
     {
-        for (int32_t j = -k; j <= k; ++j)
+        for (int32_t y = -k; y <= k; ++y)
         {
-            float32_t2 texcoord = input.texcoord + float32_t2(float32_t(i), float32_t(j)) * uvStepSize;
-            sum += gTexture.Sample(gSampler, texcoord).rgb;
+            // 現在のUV座標にピクセル単位のオフセットを加算
+            float32_t2 offset = float32_t2(x, y) * uvStepSize;
+            colorSum += gTexture.Sample(gSampler, input.texcoord + offset).rgb;
         }
     }
 
-    // 平均化して出力
-    output.color.rgb = sum / numPixels;
+    // 3. 合計ピクセル数で割って平均化（ボックスフィルタ）
+    float32_t numPixels = (float32_t) ((2 * k + 1) * (2 * k + 1));
+    output.color.rgb = colorSum / numPixels;
     output.color.a = 1.0f;
 
     return output;
