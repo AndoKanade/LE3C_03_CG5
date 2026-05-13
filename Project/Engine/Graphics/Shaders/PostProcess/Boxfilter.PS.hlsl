@@ -1,16 +1,5 @@
 #include "PostProcess.hlsli"
 
-// --- 定数バッファ (register b1) ---
-cbuffer PostProcessConfig : register(b1)
-{
-    int32_t kernelSize; 
-    float vignetteIntensity;
-    float vignetteScale;
-    float padding;
-    float2 radialBlurCenter;
-    float radialBlurWidth;
-};
-
 // --- リソース (Texture & Sampler) ---
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
@@ -28,7 +17,7 @@ PixelShaderOutput main(VertexShaderOutput input)
 
     // 2. 周辺ピクセルの色の合計を求める
     float32_t3 colorSum = (float32_t3) 0.0f;
-    int32_t k = kernelSize;
+    int32_t k = gKernelSize;
 
     // 動的な二重ループで周囲 (2k+1)x(2k+1) 範囲を走査
     for (int32_t x = -k; x <= k; ++x)

@@ -1,16 +1,5 @@
 #include "PostProcess.hlsli"
 
-// --- 定数バッファ (register b1) ---
-cbuffer PostProcessConfig : register(b1)
-{
-    int32_t gKernelSize; // Vignette不使用
-    float gVignetteIntensity; // ビネットの強さ (減衰の鋭さ)
-    float gVignetteScale; // ビネットの範囲 (広さ)
-    float gPadding; // パディング
-    float2 radialBlurCenter;
-    float radialBlurWidth;
-};
-
 // --- リソース (Texture & Sampler) ---
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);

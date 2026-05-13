@@ -15,18 +15,6 @@ static const float32_t kPrewittVerticalKernel[3][3] =
     { 1.0f / 6.0f, 1.0f / 6.0f, 1.0f / 6.0f },
 };
 
-// --- 定数バッファ (register b1) ---
-struct PostProcessData
-{
-    int32_t kernelSize;
-    float vignetteIntensity;
-    float vignetteScale;
-    float padding;
-    float2 radialBlurCenter;
-    float radialBlurWidth;
-};
-
-
 // --- リソース ---
 Texture2D<float32_t4> gTexture : register(t0); // 元画像
 Texture2D<float32_t> gDepthTexture : register(t1); // 深度テクスチャ

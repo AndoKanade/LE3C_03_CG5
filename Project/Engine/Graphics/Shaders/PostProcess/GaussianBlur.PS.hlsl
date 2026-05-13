@@ -3,17 +3,6 @@
 // --- 定数定義 ---
 static const float32_t PI = 3.14159265f;
 
-// --- 定数バッファ (register b1) ---
-cbuffer PostProcessConfig : register(b1)
-{
-    int32_t gKernelSize; // ぼかし範囲
-    float gVignetteIntensity; 
-    float gVignetteScale; 
-    float gPadding;
-    float2 radialBlurCenter;
-    float radialBlurWidth;
-};
-
 // --- リソース ---
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);

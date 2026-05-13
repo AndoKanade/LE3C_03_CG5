@@ -15,17 +15,6 @@ static const float32_t kPrewittVerticalKernel[3][3] =
     { 1.0f / 6.0f, 1.0f / 6.0f, 1.0f / 6.0f },
 };
 
-// --- 定数バッファ ---
-cbuffer PostProcessConfig : register(b1)
-{
-    int32_t gKernelSize;
-    float gVignetteIntensity;
-    float gVignetteScale;
-    float gPadding;
-    float2 radialBlurCenter;
-    float radialBlurWidth;
-};
-
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
 

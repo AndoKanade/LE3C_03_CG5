@@ -1,17 +1,5 @@
 #include "PostProcess.hlsli"
 
-// --- 定数バッファ (register b1) ---
-// 他のポストプロセス用シェーダーと構造を完全に一致させる
-cbuffer PostProcessConfig : register(b1)
-{
-    int32_t gKernelSize; // ボックスフィルタ等で使用
-    float gVignetteIntensity; // ビネットで使用
-    float gVignetteScale; // ビネットで使用
-    float gPadding; // 16バイトアライメント用パディング
-    float2 radialBlurCenter; // 放射状ブラーの中心点
-    float radialBlurWidth; // 放射状ブラーの拡散幅
-};
-
 // --- リソース ---
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSamplerLinear : register(s0);
