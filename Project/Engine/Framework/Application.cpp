@@ -15,6 +15,7 @@ Application::~Application() = default;
 void Application::Initialize(){
 	// 1. 基底クラスの初期化
 	Framework::Initialize();
+	dxCommon_->InitDepthShaderResourceView(); 
 
 	// 2. ポストプロセス用リソースの初期化
 	postProcess_ = std::make_unique<PostProcess>();
@@ -59,7 +60,6 @@ void Application::Update(){
 	Framework::Update();
 }
 
-// --- 描画処理 ---
 void Application::Draw(){
 	ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommandList();
 
@@ -75,21 +75,34 @@ void Application::Draw(){
 	// --- パス2：Swapchainへの描画 (ポストプロセス適用) ---
 	dxCommon_->PreDraw(nullptr); // 描画先をバックバッファに切り替え
 
-	// 1. RenderTextureの状態を 描画用(RT) から テクスチャ用(SRV) へ遷移
-	D3D12_RESOURCE_BARRIER barrier{};
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Transition.pResource = renderTexture_->GetResource();
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	commandList->ResourceBarrier(1,&barrier);
+	// 1. カラーと深度の状態を「テクスチャ用(SRV)」へ一括遷移
+	D3D12_RESOURCE_BARRIER barriers[2] = {};
+
+	// [0] RenderTexture (カラーバッファ)
+	barriers[0].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barriers[0].Transition.pResource = renderTexture_->GetResource();
+	barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+
+	// [1] DepthBuffer (深度バッファ) ★追加
+	barriers[1].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barriers[1].Transition.pResource = dxCommon_->depthStencilResource.Get(); // 深度リソース
+	barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+
+	commandList->ResourceBarrier(2,barriers);
 
 	// 2. ポストプロセス実行
-	postProcess_->Draw(commandList,renderTexture_->GetSrvHandleGpu(),currentPPType_);
+	postProcess_->Draw(commandList,renderTexture_->GetSrvHandleGpu(),dxCommon_->GetDepthSrvHandleGpu(),currentPPType_);
 
-	// 3. 次フレームのために状態を 描画用(RT) に戻しておく
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	commandList->ResourceBarrier(1,&barrier);
+	// 3. 次のフレームのために状態を元に戻す
+	barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+	barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+
+	commandList->ResourceBarrier(2,barriers);
 
 #ifdef _DEBUG
 	ImGuiManager::GetInstance()->Draw();
@@ -104,7 +117,7 @@ void Application::ShowPostProcessUI(){
 	ImGui::Begin("PostProcess Settings");
 
 	// フィルター切り替え
-	const char* typeNames[] = {"Default(PostProcess)", "BoxFilter", "Grayscale", "Vignette", "GaussianBlur"};
+	const char* typeNames[] = {"Default(PostProcess)", "BoxFilter", "Grayscale", "Vignette", "GaussianBlur", "Outline"};
 	int currentIdx = static_cast<int>(currentPPType_);
 
 	if(ImGui::Combo("Filter Type",&currentIdx,typeNames,IM_ARRAYSIZE(typeNames))){
@@ -137,6 +150,8 @@ void Application::ShowPostProcessUI(){
 		if(ImGui::SliderInt("Blur Strength##Gaussian",&k,0,10)){
 			postProcess_->SetKernelSize(k);
 		}
+	}else if(currentPPType_ == PostProcess::Type::Outline){
+		// アウトラインフィルターのパラメータ調整
 	}
 
 	ImGui::End();

@@ -16,6 +16,7 @@ public:
 		Grayscale,   // グレースケール
 		Vignette,    // ビネット（周辺減光）
 		GaussianBlur,  // ガウシアンブラー
+		Outline,      // アウトライン
 	};
 
 	// --- 定数バッファ構造体 (16byteアライメント) ---
@@ -29,7 +30,7 @@ public:
 public:
 	// --- 基本メンバ関数 ---
 	void Initialize(DXCommon* dxCommon);
-	void Draw(ID3D12GraphicsCommandList* commandList,D3D12_GPU_DESCRIPTOR_HANDLE textureHandle,Type type);
+	void Draw(ID3D12GraphicsCommandList* commandList,D3D12_GPU_DESCRIPTOR_HANDLE textureHandle,D3D12_GPU_DESCRIPTOR_HANDLE depthTextureHandle,Type type);
 
 	// --- アクセサ (Set関数) ---
 	void SetKernelSize(int32_t k){ if(constMap_) constMap_->kernelSize = k; }

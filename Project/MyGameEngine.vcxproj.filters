@@ -347,6 +347,10 @@
     <FxCompile Include="Engine\Graphics\Shaders\PostProcess\GaussianBlur.PS.hlsl">
       <Filter>Resources\shader\PostProcess</Filter>
     </FxCompile>
+    <FxCompile Include="Engine\Graphics\Shaders\PostProcess\LuminanceBasedOutline.PS.hlsl">
+      <Filter>Resources\shader\PostProcess</Filter>
+    </FxCompile>
+    <FxCompile Include="Engine\Graphics\Shaders\PostProcess\DepthBasedOutline.PS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Graphics\Shaders\Particle\Particle.hlsli">

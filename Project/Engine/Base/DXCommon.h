@@ -51,6 +51,9 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle;
     uint32_t descriptorSizeDSV = 0;
 
+    // --- 深度SRV用ハンドル (ポストプロセスで使用) ---
+    D3D12_GPU_DESCRIPTOR_HANDLE depthSrvHandleGpu_;
+
     // --- Synchronization (Fence) ---
     ComPtr<ID3D12Fence> fence = nullptr;
     uint64_t fenceValue = 0;
@@ -79,6 +82,7 @@ public:
     void CreateDescriptorHeaps();
     void InitRenderTargetView();
     void InitDepthStancilView();
+    void InitDepthShaderResourceView();
     void InitFence();
     void InitViewportRect();
     void InitScissorRect();
@@ -101,6 +105,12 @@ public:
     ID3D12CommandQueue* GetCommandQueue() const{ return commandQueue.Get(); }
     size_t GetSwapChainResourcesNum() const{ return swapChainResources.size(); }
     D3D12_CPU_DESCRIPTOR_HANDLE GetDsvHandle() const{ return dsvHandle; } 
+    // 深度SRVのハンドルを返すアクセサを追加
+    D3D12_GPU_DESCRIPTOR_HANDLE GetDepthSrvHandleGpu() const{ return depthSrvHandleGpu_; } 
+
+    // ハンドルをセットする関数（初期化時に使用）
+    void SetDepthSrvHandleGpu(D3D12_GPU_DESCRIPTOR_HANDLE handle){ depthSrvHandleGpu_ = handle; } 
+
 #pragma endregion
 
 private:
