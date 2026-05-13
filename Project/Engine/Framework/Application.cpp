@@ -52,6 +52,8 @@ void Application::Initialize(){
 	sceneManager->ChangeScene("TITLE");
 
 	TextureManager::GetInstance()->LoadTexture("resource/noise0.png");
+	TextureManager::GetInstance()->LoadTexture("resource/noise1.png");
+	currentMaskPath_ = "resource/noise0.png";
 }
 
 void Application::Finalize(){
@@ -60,6 +62,22 @@ void Application::Finalize(){
 
 void Application::Update(){
 	Framework::Update();
+
+	if(isDissolving_){
+		// 1フレームの時間を加算
+		dissolveTimer_ += 1.0f / 60.0f; // 60FPS固定の場合。実時間を取るならDeltaTimeを使用
+
+		// 0.0 ～ 1.0 に正規化
+		float threshold = dissolveTimer_ / kDissolveDuration;
+
+		if(threshold >= 1.0f){
+			threshold = 1.0f;
+			isDissolving_ = false; // 終了
+		}
+
+		// ポストプロセスに値を送る
+		postProcess_->SetDissolveThreshold(threshold);
+	}
 }
 
 // --- 描画処理 ---
@@ -101,7 +119,7 @@ void Application::Draw(){
 
 	// 現在のポストプロセスがDissolveの場合のみ、マスク用テクスチャ(noise0)に差し替える
 	if(currentPPType_ == PostProcess::Type::Dissolve){
-		secondarySRV = TextureManager::GetInstance()->GetSrvHandleGPU("resource/noise0.png");
+		secondarySRV = TextureManager::GetInstance()->GetSrvHandleGPU(currentMaskPath_);
 	}
 
 	// ポストプロセスの実行
@@ -176,11 +194,33 @@ void Application::ShowPostProcessUI(){
 	} else if(currentPPType_ == PostProcess::Type::Dissolve){
 		ImGui::Text("Dissolve Settings");
 
-		// しきい値
+		// しきい値 (アニメーション中は外部から更新されるため、ローカルstaticではなくメンバか共有変数にするのが理想)
+		// ここではアニメーションの状態を反映させるため、常に最新の値をセットするようにします
 		static float threshold = 0.0f;
+
+		// アニメーション中なら強制的に変数を同期（Updateで計算した値をUIにも反映）
+		if(isDissolving_){
+			threshold = dissolveTimer_ / kDissolveDuration;
+		}
+
 		if(ImGui::SliderFloat("Threshold",&threshold,0.0f,1.0f)){
 			postProcess_->SetDissolveThreshold(threshold);
 		}
+
+		// --- アニメーション制御ボタン ---
+		if(ImGui::Button("Start Animation")){
+			isDissolving_ = true;
+			dissolveTimer_ = 0.0f;
+		}
+		ImGui::SameLine();
+		if(ImGui::Button("Reset")){
+			isDissolving_ = false;
+			dissolveTimer_ = 0.0f;
+			threshold = 0.0f;
+			postProcess_->SetDissolveThreshold(0.0f);
+		}
+
+		ImGui::Separator();
 
 		// エッジの太さ
 		static float edgeWidth = 0.03f;
@@ -193,8 +233,17 @@ void Application::ShowPostProcessUI(){
 		if(ImGui::ColorEdit3("Edge Color",edgeColor)){
 			postProcess_->SetDissolveEdgeColor({edgeColor[0], edgeColor[1], edgeColor[2]});
 		}
-	}
 
+		ImGui::Separator();
+		ImGui::Text("Mask Texture");
+
+		const char* masks[] = {"resource/noise0.png", "resource/noise1.png"};
+		static int currentMaskIndex = 0;
+
+		if(ImGui::Combo("Select Mask",&currentMaskIndex,masks,IM_ARRAYSIZE(masks))){
+			currentMaskPath_ = masks[currentMaskIndex];
+		}
+	}
 	ImGui::End();
 #endif
 }
