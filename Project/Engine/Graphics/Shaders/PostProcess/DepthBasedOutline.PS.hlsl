@@ -15,15 +15,6 @@ static const float32_t kPrewittVerticalKernel[3][3] =
     { 1.0f / 6.0f, 1.0f / 6.0f, 1.0f / 6.0f },
 };
 
-// --- 定数バッファ (register b1) ---
-cbuffer PostProcessConfig : register(b1)
-{
-    int32_t gKernelSize;
-    float gVignetteIntensity;
-    float gVignetteScale;
-    float gPadding;
-};
-
 // --- リソース ---
 Texture2D<float32_t4> gTexture : register(t0); // 元画像
 Texture2D<float32_t> gDepthTexture : register(t1); // 深度テクスチャ
@@ -31,10 +22,6 @@ Texture2D<float32_t> gDepthTexture : register(t1); // 深度テクスチャ
 SamplerState gSampler : register(s0); // Linearサンプラー
 SamplerState gSamplerPoint : register(s1); // Pointサンプラー (追加)
 
-struct PixelShaderOutput
-{
-    float32_t4 color : SV_TARGET0;
-};
 
 // --- 輝度変換関数 ---
 float32_t Luminance(float32_t3 v)

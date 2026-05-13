@@ -1,23 +1,8 @@
 #include "PostProcess.hlsli"
 
-// --- 定数バッファ (register b1) ---
-cbuffer PostProcessConfig : register(b1)
-{
-    int32_t gKernelSize; // Grayscale不使用
-    float gVignetteIntensity; // Grayscale不使用
-    float gVignetteScale; // Grayscale不使用
-    float gPadding; // パディング
-};
-
 // --- リソース (Texture & Sampler) ---
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
-
-// --- 構造体 ---
-struct PixelShaderOutput
-{
-    float32_t4 color : SV_TARGET0;
-};
 
 // --- メイン関数 ---
 PixelShaderOutput main(VertexShaderOutput input)

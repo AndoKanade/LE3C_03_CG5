@@ -3,23 +3,9 @@
 // --- 定数定義 ---
 static const float32_t PI = 3.14159265f;
 
-// --- 定数バッファ (register b1) ---
-cbuffer PostProcessConfig : register(b1)
-{
-    int32_t gKernelSize; // ぼかし範囲
-    float gVignetteIntensity; 
-    float gVignetteScale; 
-    float gPadding;
-};
-
 // --- リソース ---
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
-
-struct PixelShaderOutput
-{
-    float32_t4 color : SV_TARGET0;
-};
 
 // --- Gauss関数の実装 (スライドの定義に基づく) ---
 float32_t gauss(float32_t x, float32_t y, float32_t sigma)

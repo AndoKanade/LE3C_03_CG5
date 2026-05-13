@@ -1,5 +1,6 @@
 #pragma once
 #include "DXCommon.h"
+#include "Mymath.h"
 #include <d3d12.h>
 #include <wrl.h>
 #include <map>
@@ -18,6 +19,7 @@ public:
         GaussianBlur,
         LuminanceOutline,
         DepthOutline,
+		RadialBlur
     };
 
     // 定数バッファ構造体
@@ -26,6 +28,9 @@ public:
         float vignetteIntensity;
         float vignetteScale;
         float padding;
+        Vector2 radialBlurCenter; 
+        float radialBlurWidth;    
+        float padding2;           
     };
 
 public:
@@ -36,6 +41,8 @@ public:
     void SetKernelSize(int32_t k){ if(constMap_) constMap_->kernelSize = k; }
     void SetVignetteIntensity(float intensity){ if(constMap_) constMap_->vignetteIntensity = intensity; }
     void SetVignetteScale(float scale){ if(constMap_) constMap_->vignetteScale = scale; }
+    void SetRadialBlurCenter(const Vector2& center){ if(constMap_) constMap_->radialBlurCenter = center; }
+    void SetRadialBlurWidth(float width){ if(constMap_) constMap_->radialBlurWidth = width; }
 
 private:
     void CreateRootSignature(ID3D12Device* device);
