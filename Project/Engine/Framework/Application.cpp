@@ -104,7 +104,7 @@ void Application::ShowPostProcessUI(){
 	ImGui::Begin("PostProcess Settings");
 
 	// フィルター切り替え
-	const char* typeNames[] = {"Default(PostProcess)", "BoxFilter", "Grayscale", "Vignette"};
+	const char* typeNames[] = {"Default(PostProcess)", "BoxFilter", "Grayscale", "Vignette", "GaussianBlur"};
 	int currentIdx = static_cast<int>(currentPPType_);
 
 	if(ImGui::Combo("Filter Type",&currentIdx,typeNames,IM_ARRAYSIZE(typeNames))){
@@ -130,6 +130,11 @@ void Application::ShowPostProcessUI(){
 	} else if(currentPPType_ == PostProcess::Type::BoxFilter){
 		static int k = 1;
 		if(ImGui::SliderInt("Kernel Size (k)##PostProcess",&k,0,5)){
+			postProcess_->SetKernelSize(k);
+		}
+	} else if(currentPPType_ == PostProcess::Type::GaussianBlur){
+		static int k = 2;
+		if(ImGui::SliderInt("Blur Strength##Gaussian",&k,0,10)){
 			postProcess_->SetKernelSize(k);
 		}
 	}
