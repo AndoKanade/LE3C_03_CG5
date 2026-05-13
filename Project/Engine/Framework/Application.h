@@ -33,4 +33,10 @@ private:
 	std::unique_ptr<RenderTexture> renderTexture_;
 	std::unique_ptr<PostProcess> postProcess_;
 	PostProcess::Type currentPPType_ = PostProcess::Type::PostProcess;
+	std::string currentMaskPath_;
+
+	// --- Dissolveアニメーション用 ---
+	bool isDissolving_ = false;   // アニメーション中か
+	float dissolveTimer_ = 0.0f;  // 経過時間
+	const float kDissolveDuration = 2.0f; // 何秒かけて消えるか
 };
