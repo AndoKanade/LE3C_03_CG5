@@ -17,6 +17,7 @@ void PostProcess::Initialize(DXCommon* dxCommon){
 	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::DepthOutline,L"Engine/Graphics/Shaders/PostProcess/DepthBasedOutline.PS.hlsl");
 	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::RadialBlur,L"Engine/Graphics/Shaders/PostProcess/RadialBlur.PS.hlsl");
 	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::Dissolve,L"Engine/Graphics/Shaders/PostProcess/Dissolve.PS.hlsl");
+	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::Random,L"Engine/Graphics/Shaders/PostProcess/Random.PS.hlsl");
 
 	// 定数バッファの生成とマッピング
 	constBuff_ = dxCommon->CreateBufferResource(sizeof(PostProcessData));
@@ -30,6 +31,8 @@ void PostProcess::Initialize(DXCommon* dxCommon){
 	constMap_->radialBlurCenter = {0.5f, 0.5f};
 	constMap_->radialBlurWidth = 0.01f;
 	constMap_->dissolveThreshold = 0.5f;
+	constMap_->randomIntensity = 0.5f;
+	constMap_->randomTime = 0.0f;
 }
 
 // --- 描画処理 ---

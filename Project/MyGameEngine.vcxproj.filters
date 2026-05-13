@@ -359,6 +359,7 @@
     <FxCompile Include="Engine\Graphics\Shaders\PostProcess\Dissolve.PS.hlsl">
       <Filter>Resources\shader\PostProcess</Filter>
     </FxCompile>
+    <FxCompile Include="Engine\Graphics\Shaders\PostProcess\Random.PS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Graphics\Shaders\Particle\Particle.hlsli">
