@@ -26,4 +26,8 @@ cbuffer PostProcessConfig : register(b1)
     float dissolveThreshold; // 消えるしきい値 (0.0〜1.0)
     float dissolveEdgeWidth; // エッジ（境界線）の太さ
     float3 dissolveEdgeColor; // エッジの発光色 (RGB)
+    
+    // --- Random / Noise 用 ---
+    float randomIntensity; // ノイズの強さ
+    float randomTime; // 時間（これがないとノイズが止まって見える）
 };

@@ -20,7 +20,8 @@ public:
         LuminanceOutline,
         DepthOutline,
 		RadialBlur,
-		Dissolve
+		Dissolve,
+        Random
     };
 
     // 定数バッファ構造体
@@ -34,6 +35,9 @@ public:
 		float dissolveThreshold;
         float dissolveEdgeWidth;
         Vector3 dissolveEdgeColor;
+        float randomIntensity;
+        float randomTime;
+        float padding3[2]; // 16byte調整
     };
 
 public:
@@ -49,6 +53,8 @@ public:
     void SetDissolveThreshold(float threshold){ if(constMap_) constMap_->dissolveThreshold = threshold; }
     void SetDissolveEdgeWidth(float width){ if(constMap_) constMap_->dissolveEdgeWidth = width; }
     void SetDissolveEdgeColor(const Vector3& color){ if(constMap_) constMap_->dissolveEdgeColor = color; }
+	void SetRandomIntensity(float intensity){ if(constMap_) constMap_->randomIntensity = intensity; }   
+    void SetRandomTime(float time){ if(constMap_) constMap_->randomTime = time; }
 
 private:
     void CreateRootSignature(ID3D12Device* device);

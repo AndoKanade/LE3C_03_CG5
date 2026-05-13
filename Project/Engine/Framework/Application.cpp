@@ -78,6 +78,10 @@ void Application::Update(){
 		// ポストプロセスに値を送る
 		postProcess_->SetDissolveThreshold(threshold);
 	}
+
+	static float time = 0.0f;
+	time += 1.0f / 60.0f;
+	postProcess_->SetRandomTime(time);
 }
 
 // --- 描画処理 ---
@@ -148,7 +152,7 @@ void Application::ShowPostProcessUI(){
 	ImGui::Begin("PostProcess Settings");
 
 	// フィルターの切り替え
-	const char* typeNames[] = {"Default", "BoxFilter", "Grayscale", "Vignette", "GaussianBlur", "LuminanceOutline", "DepthOutline","RadialBlur","Dissolve"};
+	const char* typeNames[] = {"Default", "BoxFilter", "Grayscale", "Vignette", "GaussianBlur", "LuminanceOutline", "DepthOutline","RadialBlur","Dissolve","Random"};
 	int currentIdx = static_cast<int>(currentPPType_);
 
 	if(ImGui::Combo("Filter Type",&currentIdx,typeNames,IM_ARRAYSIZE(typeNames))){
@@ -242,6 +246,13 @@ void Application::ShowPostProcessUI(){
 
 		if(ImGui::Combo("Select Mask",&currentMaskIndex,masks,IM_ARRAYSIZE(masks))){
 			currentMaskPath_ = masks[currentMaskIndex];
+		}
+	} else if(currentPPType_ == PostProcess::Type::Random){
+		ImGui::Text("Random Noise Settings");
+
+		static float intensity = 0.5f;
+		if(ImGui::DragFloat("Intensity",&intensity,0.01f,0.0f,1.0f)){
+			postProcess_->SetRandomIntensity(intensity);
 		}
 	}
 	ImGui::End();
