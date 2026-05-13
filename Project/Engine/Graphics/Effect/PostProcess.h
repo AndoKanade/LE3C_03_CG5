@@ -19,7 +19,8 @@ public:
         GaussianBlur,
         LuminanceOutline,
         DepthOutline,
-		RadialBlur
+		RadialBlur,
+		Dissolve
     };
 
     // 定数バッファ構造体
@@ -30,7 +31,9 @@ public:
         float padding;
         Vector2 radialBlurCenter; 
         float radialBlurWidth;    
-        float padding2;           
+		float dissolveThreshold;
+        float dissolveEdgeWidth;
+        Vector3 dissolveEdgeColor;
     };
 
 public:
@@ -43,6 +46,9 @@ public:
     void SetVignetteScale(float scale){ if(constMap_) constMap_->vignetteScale = scale; }
     void SetRadialBlurCenter(const Vector2& center){ if(constMap_) constMap_->radialBlurCenter = center; }
     void SetRadialBlurWidth(float width){ if(constMap_) constMap_->radialBlurWidth = width; }
+    void SetDissolveThreshold(float threshold){ if(constMap_) constMap_->dissolveThreshold = threshold; }
+    void SetDissolveEdgeWidth(float width){ if(constMap_) constMap_->dissolveEdgeWidth = width; }
+    void SetDissolveEdgeColor(const Vector3& color){ if(constMap_) constMap_->dissolveEdgeColor = color; }
 
 private:
     void CreateRootSignature(ID3D12Device* device);
