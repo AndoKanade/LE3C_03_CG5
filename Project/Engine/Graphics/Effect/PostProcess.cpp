@@ -13,6 +13,7 @@ void PostProcess::Initialize(DXCommon* dxCommon){
 	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::BoxFilter,L"Engine/Graphics/Shaders/PostProcess/BoxFilter.PS.hlsl");
 	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::Grayscale,L"Engine/Graphics/Shaders/PostProcess/Grayscale.PS.hlsl");
 	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::Vignette,L"Engine/Graphics/Shaders/PostProcess/Vignette.PS.hlsl");
+	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::GaussianBlur,L"Engine/Graphics/Shaders/PostProcess/GaussianBlur.PS.hlsl");
 
 	// 3. 定数バッファの生成とマッピング
 	constBuff_ = dxCommon->CreateBufferResource(sizeof(PostProcessData));

@@ -15,6 +15,7 @@ public:
 		BoxFilter,   // ボックスフィルタ（ブラー）
 		Grayscale,   // グレースケール
 		Vignette,    // ビネット（周辺減光）
+		GaussianBlur,  // ガウシアンブラー
 	};
 
 	// --- 定数バッファ構造体 (16byteアライメント) ---
