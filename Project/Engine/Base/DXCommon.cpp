@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "RenderTexture.h"
 #include "StringUtility.h"
+#include "SrvManager.h"
 
 #include <d3d12.h>
 #include <thread>
@@ -193,6 +194,28 @@ void DXCommon::InitDepthStancilView(){
     dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 
     device->CreateDepthStencilView(depthStencilResource.Get(),&dsvDesc,dsvHandle);
+}
+
+void DXCommon::InitDepthShaderResourceView(){
+    uint32_t index = SrvManager::GetInstance()->Allocate();
+    D3D12_CPU_DESCRIPTOR_HANDLE srvHandleCpu = SrvManager::GetInstance()->GetCPUDescriptorHandle(index);
+
+    // クラスのメンバ変数にGPUハンドルを保存（これが Draw で使われる）
+    depthSrvHandleGpu_ = SrvManager::GetInstance()->GetGPUDescriptorHandle(index);
+
+    // 2. SRVの設定 (スライドの通り)
+    D3D12_SHADER_RESOURCE_VIEW_DESC depthSrvDesc{};
+    depthSrvDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS; // D24_S8用
+    depthSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    depthSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    depthSrvDesc.Texture2D.MipLevels = 1;
+
+    // 3. SRVの生成
+    device->CreateShaderResourceView(
+        depthStencilResource.Get(),
+        &depthSrvDesc,
+        srvHandleCpu
+    );
 }
 
 void DXCommon::InitFence(){
