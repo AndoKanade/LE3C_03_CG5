@@ -16,6 +16,7 @@ void PostProcess::Initialize(DXCommon* dxCommon){
 	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::LuminanceOutline,L"Engine/Graphics/Shaders/PostProcess/LuminanceBasedOutline.PS.hlsl");
 	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::DepthOutline,L"Engine/Graphics/Shaders/PostProcess/DepthBasedOutline.PS.hlsl");
 	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::RadialBlur,L"Engine/Graphics/Shaders/PostProcess/RadialBlur.PS.hlsl");
+	CreatePipelineState(dxCommon->GetDevice(),dxCommon,Type::Dissolve,L"Engine/Graphics/Shaders/PostProcess/Dissolve.PS.hlsl");
 
 	// 定数バッファの生成とマッピング
 	constBuff_ = dxCommon->CreateBufferResource(sizeof(PostProcessData));
@@ -28,6 +29,7 @@ void PostProcess::Initialize(DXCommon* dxCommon){
 	// スライドの定数値を初期値として設定
 	constMap_->radialBlurCenter = {0.5f, 0.5f};
 	constMap_->radialBlurWidth = 0.01f;
+	constMap_->dissolveThreshold = 0.5f;
 }
 
 // --- 描画処理 ---
