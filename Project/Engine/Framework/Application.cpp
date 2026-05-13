@@ -118,7 +118,7 @@ void Application::ShowPostProcessUI(){
     ImGui::Begin("PostProcess Settings");
 
     // フィルターの切り替え
-    const char* typeNames[] = {"Default", "BoxFilter", "Grayscale", "Vignette", "GaussianBlur", "LuminanceOutline", "DepthOutline"};
+    const char* typeNames[] = {"Default", "BoxFilter", "Grayscale", "Vignette", "GaussianBlur", "LuminanceOutline", "DepthOutline","RadialBlur"};
     int currentIdx = static_cast<int>(currentPPType_);
 
     if(ImGui::Combo("Filter Type",&currentIdx,typeNames,IM_ARRAYSIZE(typeNames))){
@@ -149,6 +149,18 @@ void Application::ShowPostProcessUI(){
         currentPPType_ == PostProcess::Type::DepthOutline){
         ImGui::Text(currentPPType_ == PostProcess::Type::DepthOutline?"Depth Edge Settings":"Luminance Edge Settings");
         ImGui::Text("Edge detection active.");
+    } else if(currentPPType_ == PostProcess::Type::RadialBlur){
+        ImGui::Text("Radial Blur Settings");
+
+        static float center[2] = {0.5f, 0.5f};
+        if(ImGui::DragFloat2("Center",center,0.01f,0.0f,1.0f)){
+            postProcess_->SetRadialBlurCenter({center[0], center[1]});
+        }
+
+        static float width = 0.01f;
+        if(ImGui::DragFloat("Width",&width,0.001f,0.0f,0.1f)){
+            postProcess_->SetRadialBlurWidth(width);
+        }
     }
 
     ImGui::End();

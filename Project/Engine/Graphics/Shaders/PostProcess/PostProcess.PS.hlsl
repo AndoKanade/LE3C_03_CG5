@@ -7,17 +7,14 @@ cbuffer PostProcessConfig : register(b1)
     float gVignetteIntensity; // 使用しないが定義が必要
     float gVignetteScale; // 使用しないが定義が必要
     float gPadding; // パディング
+    float2 radialBlurCenter;
+    float radialBlurWidth;
 };
 
 // --- リソース (Texture & Sampler) ---
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
 
-// --- 構造体 ---
-struct PixelShaderOutput
-{
-    float32_t4 color : SV_TARGET0;
-};
 
 // --- メイン関数 ---
 PixelShaderOutput main(VertexShaderOutput input)

@@ -10,16 +10,13 @@ cbuffer PostProcessConfig : register(b1)
     float gVignetteIntensity; 
     float gVignetteScale; 
     float gPadding;
+    float2 radialBlurCenter;
+    float radialBlurWidth;
 };
 
 // --- リソース ---
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
-
-struct PixelShaderOutput
-{
-    float32_t4 color : SV_TARGET0;
-};
 
 // --- Gauss関数の実装 (スライドの定義に基づく) ---
 float32_t gauss(float32_t x, float32_t y, float32_t sigma)

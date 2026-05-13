@@ -22,15 +22,12 @@ cbuffer PostProcessConfig : register(b1)
     float gVignetteIntensity;
     float gVignetteScale;
     float gPadding;
+    float2 radialBlurCenter;
+    float radialBlurWidth;
 };
 
 Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
-
-struct PixelShaderOutput
-{
-    float32_t4 color : SV_TARGET0;
-};
 
 // --- 輝度変換関数 ---
 float32_t Luminance(float32_t3 v)
